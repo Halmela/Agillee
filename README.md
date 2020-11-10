@@ -18,9 +18,3 @@ Jos esineestä halutaan lapsi, voidaan etsiä tietokannasta jokainen esine, jonk
 Jos esine halutaan poistaa, etsitään samalla kaikki esineet, joiden vanhempi_id on kyseinen esine.
 Käyttäjältä kysytään poistetaanko esineen sisällä olleet esineet, vaihdetaanko niiden vanhempi poistettavan vanhemmaksi, vai pistetäänkö ne johonkin muuhun laatikkoon.
 
-## Stack
-Ohjelmointikielenä käytän Rustia; tietokantakirjastona SQLx:aa, joka tukee sekä SQLitea että PostgresSQL:a ja web-kirjastona Rocketia.
-Nämä ovat aika samankaltaiset kuin harjoitustyössä muuten käytettävät kirjastota.
-
-
-
