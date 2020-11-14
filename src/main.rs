@@ -1,39 +1,78 @@
 use std::fmt;
 use rand::Rng;
 use std::iter;
+use postgres::{Client, NoTls, Error, Row};
 
-fn main() {
+fn main() -> Result<(), Error> {
+    let mut client = Client::connect("host=localhost port=5432 dbname=agillee user=postgres", NoTls)?;
+
+	client.execute("
+    	CREATE TABLE objects (
+        	id	    SERIAL PRIMARY KEY,
+        	parent  INTEGER REFERENCES objects(id)
+    	)
+    ;", &[])?;
+
+  
     let mut rng = rand::thread_rng();
 
-	let n: u32 = 100;
+	let n: i32 = 100;
 
-	iter::once(
-    		Object {id: 0, parent: None})
-    	.chain(
-    	(0..n)
-			.map(|i| match rng.gen_range(0,i+1) {
-    			0 => Object { id: i, parent: None },
+	let objs: Vec<Object> = 
+    	(1..n)
+			.map(|i| match rng.gen_range(1,i+1) {
+    			1 => Object { id: i, parent: None },
     			_ => Object {
     			id: i,
-    			parent: Some(rng.gen_range(0, i))},
-			}))
-		.for_each(|o| println!("{}", o));
+    			parent: Some(rng.gen_range(1, i))},
+			})
+		.collect();
 
+
+	let mut transaction = client.transaction()?;
+
+	
+	for o in objs {
+    	println!("{}", o);
+    	match o.parent {
+        	Some(p) => transaction.execute(
+                    	"INSERT INTO objects
+                    		(parent) VALUES ($1)
+                    	", &[&(p)])?,
+        	None    => transaction.execute(
+                    	"INSERT INTO objects
+                    		(parent) VALUES (NULL)
+                    	", &[])?
+    	};
+
+	}
+
+	transaction.commit()?;
+	
+	for row in client.query("SELECT * FROM objects", &[])? {
+		println!("{}",Object::from(row));
+	}
+
+    client.execute("DROP TABLE objects;", &[])?;
+
+    Ok(())
 }
 
 
-#[derive(Debug)]
 struct Object {
-    id: u32,
-    parent: Option<u32>
+    id: i32,
+    parent: Option<i32>
 }
-/*
-impl Object {
-    fn ancestors() -> Vec<Object> {
 
+impl From<Row> for Object {
+    fn from(row: Row) -> Self {
+		Object {
+    		id: row.get(0),
+    		parent: row.get(1)
+		}
     }
 }
-*/
+
 
 impl fmt::Display for Object{
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
