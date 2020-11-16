@@ -1,21 +1,33 @@
 use std::fmt;
 use rand::Rng;
-use std::iter;
 use postgres::{Client, NoTls, Error, Row};
 
-fn main() -> Result<(), Error> {
-    let mut client = Client::connect("host=localhost port=5432 dbname=agillee user=postgres", NoTls)?;
 
-	client.execute("
-    	CREATE TABLE objects (
+fn build_client() -> Result<Client, Error> {
+	let client = Client::connect("host=localhost port=5432 dbname=agillee user=postgres", NoTls)?;
+	Ok(initialize_db(client)?)
+}
+
+
+fn initialize_db(mut client: Client) -> Result<Client, Error> {
+    let scheme =
+        "CREATE TABLE objects (
         	id	    SERIAL PRIMARY KEY,
         	parent  INTEGER REFERENCES objects(id)
-    	)
-    ;", &[])?;
+    	);";
+    match client.execute(scheme, &[]) {
+		Ok(_) => Ok(client),
+		Err(e) => match e.code().unwrap().code() {
+    		"42P07" => Ok(client), // error code for duplicate table
+			_ => Err(e)
+		}
+	}
+}
 
-  
+
+fn main() -> Result<(), Error> {
+    let mut client = build_client()?;
     let mut rng = rand::thread_rng();
-
 	let n: i32 = 100;
 
 	let objs: Vec<Object> = 
@@ -53,7 +65,7 @@ fn main() -> Result<(), Error> {
 		println!("{}",Object::from(row));
 	}
 
-    client.execute("DROP TABLE objects;", &[])?;
+//    client.execute("DROP TABLE objects;", &[])?;
 
     Ok(())
 }
@@ -63,6 +75,7 @@ struct Object {
     id: i32,
     parent: Option<i32>
 }
+
 
 impl From<Row> for Object {
     fn from(row: Row) -> Self {
