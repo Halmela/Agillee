@@ -9,11 +9,18 @@ fn build_client() -> Result<Client, Error> {
 }
 
 
-fn initialize_db(mut client: Client) -> Result<Client, Error> {
-    let db = Database {
-        tables: vec!(Table::Object) };
+fn initialize_db(client: Client) -> Result<Client, Error> {
+    let db = Database { tables: vec!(Table::Object) };
 
 	Ok(db.add_tables(client)?)
+}
+
+/*
+ * Every table/struct should also be enum
+ */
+
+enum Table {
+    Object,
 }
 
 struct Database {
@@ -22,32 +29,36 @@ struct Database {
 
 impl Database {
 	fn add_tables(&self, mut client: Client) -> Result<Client, Error> {
-    	
-		for table in &self.tables {
-    		let mut transaction = client.transaction()?;
-    		Database::add_scheme(table_to_scheme(table), transaction)?;
+    	for table in &self.tables {
+    		Database::add_scheme(table_to_scheme(table), client.transaction()?)?;
 		}
 
 		Ok(client)
 	}
 
 	fn add_scheme(scheme: &str, mut transaction: Transaction) -> Result<(), Error> {
-        let res =transaction.execute(scheme, &[]);
-		transaction.commit()?;
-    	match res {
+        match transaction.execute(scheme, &[]) {
+            Ok(_)  => {
+                transaction.commit()?;
+                Ok(())},
             Err(e) => match e.code().unwrap().code() {
-                "42P07" => Ok(()),
-                _	    => Err(e)},
-            Ok(_) 		=> {
-                Ok(())
-            }
+                "42P07" => {	// Error code for creating a duplicate table
+                    transaction.commit()?;
+                    Ok(())},
+                _	    => Err(e)}
         }
 	}
 }
 
+
+/*
+ * Return SQL-statement describing the table
+ * or an empty table as fallback
+ */
+
 fn table_to_scheme(table: &Table) -> &'static str {
 	match table {
-    	Object => 
+    	Table::Object =>
             "CREATE TABLE objects (
             	id	    SERIAL PRIMARY KEY,
             	parent  INTEGER REFERENCES objects(id)
@@ -59,8 +70,9 @@ fn table_to_scheme(table: &Table) -> &'static str {
 
 fn main() -> Result<(), Error> {
     let mut client = build_client()?;
+    
     let mut rng = rand::thread_rng();
-	let n: i32 = 100;
+	let n: i32 = 1000;
 
 	let objs: Vec<Object> = 
     	(1..n)
@@ -76,7 +88,7 @@ fn main() -> Result<(), Error> {
 
 	
 	for o in objs {
-    	println!("{}", o);
+    	//println!("{}", o);
     	match o.parent {
         	Some(p) => transaction.execute(
                     	"INSERT INTO objects
@@ -96,7 +108,7 @@ fn main() -> Result<(), Error> {
 		println!("{}",Object::from(row));
 	}
 
-//    client.execute("DROP TABLE objects;", &[])?;
+    client.execute("DROP TABLE objects;", &[])?;
 
     Ok(())
 }
@@ -108,9 +120,6 @@ struct Object {
 }
 
 
-enum Table {
-    Object
-}
 
 impl From<Row> for Object {
     fn from(row: Row) -> Self {
