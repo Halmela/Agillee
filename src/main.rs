@@ -1,6 +1,6 @@
 use std::fmt;
 use rand::Rng;
-use postgres::{Client, NoTls, Error, Row};
+use postgres::{Client, NoTls, Error, Row, Transaction};
 
 
 fn build_client() -> Result<Client, Error> {
@@ -10,17 +10,49 @@ fn build_client() -> Result<Client, Error> {
 
 
 fn initialize_db(mut client: Client) -> Result<Client, Error> {
-    let scheme =
-        "CREATE TABLE objects (
-        	id	    SERIAL PRIMARY KEY,
-        	parent  INTEGER REFERENCES objects(id)
-    	);";
-    match client.execute(scheme, &[]) {
-		Ok(_) => Ok(client),
-		Err(e) => match e.code().unwrap().code() {
-    		"42P07" => Ok(client), // error code for duplicate table
-			_ => Err(e)
+    let db = Database {
+        tables: vec!(Table::Object) };
+
+	Ok(db.add_tables(client)?)
+}
+
+struct Database {
+	tables: Vec<Table>
+}
+
+impl Database {
+	fn add_tables(&self, mut client: Client) -> Result<Client, Error> {
+    	
+		for table in &self.tables {
+    		let mut transaction = client.transaction()?;
+    		Database::add_scheme(table_to_scheme(table), transaction)?;
 		}
+
+		Ok(client)
+	}
+
+	fn add_scheme(scheme: &str, mut transaction: Transaction) -> Result<(), Error> {
+        let res =transaction.execute(scheme, &[]);
+		transaction.commit()?;
+    	match res {
+            Err(e) => match e.code().unwrap().code() {
+                "42P07" => Ok(()),
+                _	    => Err(e)},
+            Ok(_) 		=> {
+                Ok(())
+            }
+        }
+	}
+}
+
+fn table_to_scheme(table: &Table) -> &'static str {
+	match table {
+    	Object => 
+            "CREATE TABLE objects (
+            	id	    SERIAL PRIMARY KEY,
+            	parent  INTEGER REFERENCES objects(id)
+        	);",
+		_ 	   => "CREATE TABLE empty();"
 	}
 }
 
@@ -35,11 +67,10 @@ fn main() -> Result<(), Error> {
 			.map(|i| match rng.gen_range(1,i+1) {
     			1 => Object { id: i, parent: None },
     			_ => Object {
-    			id: i,
-    			parent: Some(rng.gen_range(1, i))},
-			})
+            			id: i,
+            			parent: Some(rng.gen_range(1, i))},
+            		})
 		.collect();
-
 
 	let mut transaction = client.transaction()?;
 
@@ -76,6 +107,10 @@ struct Object {
     parent: Option<i32>
 }
 
+
+enum Table {
+    Object
+}
 
 impl From<Row> for Object {
     fn from(row: Row) -> Self {
