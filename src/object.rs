@@ -3,7 +3,7 @@ use std::fmt;
 
 
 pub struct Object {
-    pub id: i32,
+    pub id: Option<i32>,
     pub parent: Option<i32>
 }
 
@@ -20,12 +20,16 @@ impl From<Row> for Object {
 
 impl fmt::Display for Object{
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    	let id = match self.id {
+        	Some(id) => id.to_string(),
+        	None	 => String::from("None")
+    	};
     	let parent = match self.parent {
         	Some(id) => id.to_string(),
         	None	 => String::from("None")
     	};
     	
-    	write!(f, "id: {}\t parent: {}", self.id, parent)
+    	write!(f, "id: {}\t parent: {}", id, parent)
 	}
 }
 

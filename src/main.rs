@@ -6,21 +6,21 @@ use agillee::database::*;
 
 
 fn main() -> Result<(), Error> {
-    let mut client = initialize_db()?;
+    let mut db = initialize_db()?;
     let mut rng = rand::thread_rng();
 	let n: i32 = 100;
 
 	let objs: Vec<Object> = 
     	(1..n)
 			.map(|i| match rng.gen_range(1,i+1) {
-    			1 => Object { id: i, parent: None },
+    			1 => Object { id: Some(i), parent: None },
     			_ => Object {
-            			id: i,
+            			id: Some(i),
             			parent: Some(rng.gen_range(1, i))},
             		})
 		.collect();
 
-	let mut transaction = client.transaction()?;
+	let mut transaction = db.client.transaction()?;
 
 	
 	for o in objs {
@@ -40,11 +40,11 @@ fn main() -> Result<(), Error> {
 
 	transaction.commit()?;
 	
-	for row in client.query("SELECT * FROM objects", &[])? {
+	for row in db.client.query("SELECT * FROM objects", &[])? {
 		println!("{}",Object::from(row));
 	}
 
-//    client.execute("DROP TABLE objects;", &[])?;
+//    db.client.execute("DROP TABLE objects;", &[])?;
 
     Ok(())
 }

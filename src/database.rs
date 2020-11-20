@@ -1,28 +1,33 @@
 use postgres::{Client, NoTls, Error, Row, Transaction};
 //use agillee::table::*;
 use crate::table::*;
+use crate::object::*;
 
 
-pub fn initialize_db() -> Result<Client, Error> {
-	let client = Client::connect("host=localhost port=5432 dbname=agillee user=postgres", NoTls)?;
-    let db = Database { tables: vec!(Table::Object) };
+pub fn initialize_db() -> Result<Database, Error> {
+	let schema = Object { id: None, parent: None };
+    let db = Database {
+            client: Client::connect("host=localhost port=5432 dbname=agillee user=postgres", NoTls)?,
+            tables: vec!(Table::Object) };
 
-	Ok(db.add_tables(client)?)
+	Ok(db.add_tables()?)
 }
 
 
 pub struct Database {
-    tables: Vec<Table>
+    //schema: Object,
+    tables: Vec<Table>,
+    pub client: Client
 }
 
 impl Database {
-    fn add_tables(&self, mut client: Client) -> Result<Client, Error> {
+    fn add_tables(mut self) -> Result<Database, Error> {
     	for table in &self.tables {
-        	let transaction = client.transaction()?;
+        	let transaction = self.client.transaction()?;
         	Database::add_scheme(table_to_scheme(table), transaction)?;
     	}
 
-    	Ok(client)
+    	Ok(self)
     }
 
     fn add_scheme(scheme: &str, mut transaction: Transaction) -> Result<(), Error> {
