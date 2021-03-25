@@ -1,14 +1,15 @@
-use postgres::{Client, NoTls, Error, Row, Transaction};
+
+use postgres::{Client, NoTls, Error, Transaction};
 //use agillee::table::*;
 use crate::table::*;
-use crate::object::*;
+//use crate::object::*;
 
 
 pub fn initialize_db() -> Result<Database, Error> {
-	let schema = Object { id: None, parent: None };
+	//let schema = Object { id: None, parent: None };
     let db = Database {
             client: Client::connect("host=localhost port=5432 dbname=agillee user=postgres", NoTls)?,
-            tables: vec!(Table::Object) };
+            tables: vec!(Table::Object, Table::Relation) };
 
 	Ok(db.add_tables()?)
 }
@@ -41,5 +42,12 @@ impl Database {
                 _	    => Err(e)}
         }
     }
+
+    pub fn drop_tables(&mut self) -> Result<(), Error> {
+        self.client.execute("DROP TABLE objects, relations", &[])?;
+        
+        Ok(())
+    }
 }
+
 

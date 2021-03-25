@@ -3,7 +3,8 @@
  */
 
 pub enum Table {
-    Object
+    Object,
+    Relation
 }
 
 
@@ -16,8 +17,13 @@ pub fn table_to_scheme(table: &Table) -> &'static str {
 	match table {
     	Table::Object =>
             "CREATE TABLE objects (
-            	id	    SERIAL PRIMARY KEY,
-            	parent  INTEGER REFERENCES objects(id)
+            	id 	        SERIAL PRIMARY KEY,
+            	description TEXT
+        	);",
+        Table::Relation =>
+        	"CREATE TABLE relations (
+            	start INTEGER REFERENCES objects(id),
+            	sink  INTEGER REFERENCES objects(id)
         	);",
 		_ 	   => "CREATE TABLE empty();"
 	}

@@ -1,10 +1,35 @@
 use rand::Rng;
-use postgres::{Client, NoTls, Error, Row, Transaction};
+use postgres::{Error};
 use agillee::object::*;
-use agillee::table::*;
+//use agillee::table::*;
 use agillee::database::*;
 
 
+fn main() -> Result<(), Error> {
+    let db = initialize_db()?;
+    let mut objs = Objects::new(db);
+    let mut rng = rand::thread_rng();
+
+	let n = 100000;
+	let os = (0..n).map(|_| Object::new(None, None)).collect();
+	let rels = (0..n).map(|_| (rng.gen_range(1,n), rng.gen_range(1,n))).collect();
+
+    println!("gen ready");
+    objs.insert_objects(os)?;
+    println!("objs inserted");
+    objs.insert_relations(rels)?;
+    println!("rels inserted");
+    //objs.insert_relations(vec!((1,2), (2,3), (3,4), (4,3)))?;
+    objs.add_relations(&1, Relation::In)?;
+    println!("ins added");
+    objs.add_relations(&1, Relation::Out)?;
+    println!("{}", &objs);
+
+    Ok(())
+    //Ok(objs.drop()?)
+}
+
+/*
 fn main() -> Result<(), Error> {
     let mut db = initialize_db()?;
     let mut rng = rand::thread_rng();
@@ -44,10 +69,10 @@ fn main() -> Result<(), Error> {
 		println!("{}",Object::from(row));
 	}
 
-//    db.client.execute("DROP TABLE objects;", &[])?;
+    db.client.execute("DROP TABLE objects;", &[])?;
 
     Ok(())
 }
 
 
-
+*/
