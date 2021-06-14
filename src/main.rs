@@ -10,7 +10,7 @@ fn main() -> Result<(), Error> {
     let mut objs = Objects::new(db);
     let mut rng = rand::thread_rng();
 
-	let n = 100000;
+	let n = 1000;
 	let os = (0..n).map(|_| Object::new(None, None)).collect();
 	let rels = (0..n).map(|_| (rng.gen_range(1,n), rng.gen_range(1,n))).collect();
 
