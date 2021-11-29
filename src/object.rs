@@ -177,14 +177,23 @@ impl fmt::Display for Object {
 impl fmt::Display for Objects {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     	let mut res = String::new();
-        for (_, o) in &self.objects {
-        	write!(&mut res, "{}\n", o.to_string()).unwrap();
-        }
 
-		write!(&mut res, "start\tsink\n")?;
-        for (start, sink) in &self.relations {
-            write!(&mut res, "{:<7} {}\n", start, sink)?;
-        }
+    	if self.objects.is_empty() {
+        	write!(&mut res, "No objects\n").unwrap();
+    	} else {
+            for (_, o) in &self.objects {
+            	write!(&mut res, "{}\n", o.to_string()).unwrap();
+            }
+    	}
+
+		if self.relations.is_empty() {
+        	write!(&mut res, "No objects\n").unwrap();
+		} else {
+        	write!(&mut res, "start\tsink\n")?;
+            for (start, sink) in &self.relations {
+                write!(&mut res, "{:<7} {}\n", start, sink)?;
+            }
+		}
         write!(f, "{}", res)
 	}
 }

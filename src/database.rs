@@ -8,7 +8,9 @@ use crate::table::*;
 pub fn initialize_db() -> Result<Database, Error> {
 	//let schema = Object { id: None, parent: None };
     let db = Database {
-            client: Client::connect("host=localhost port=5432 dbname=agillee user=postgres", NoTls)?,
+            client: Client::connect(
+                "postgresql://postgres:psql@postgres:5432/agillee",
+                NoTls)?,
             tables: vec!(Table::Object, Table::Relation) };
 
 	Ok(db.add_tables()?)

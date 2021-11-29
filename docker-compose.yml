@@ -1,0 +1,17 @@
+version: "3"
+
+services:
+    postgres:
+        image: postgres:13
+        restart: always
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=psql
+            - POSTGRES_DB=agillee
+        ports:
+            - "5234:5432"
+
+    agillee:
+        build: .
+        depends_on:
+            - postgres
