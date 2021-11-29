@@ -2,18 +2,27 @@
 use postgres::{Client, NoTls, Error, Transaction};
 //use agillee::table::*;
 use crate::table::*;
+use std::{thread, time};
+
 //use crate::object::*;
 
 
 pub fn initialize_db() -> Result<Database, Error> {
 	//let schema = Object { id: None, parent: None };
-    let db = Database {
-            client: Client::connect(
+	match Client::connect(
                 "postgresql://postgres:psql@postgres:5432/agillee",
-                NoTls)?,
-            tables: vec!(Table::Object, Table::Relation) };
-
-	Ok(db.add_tables()?)
+                NoTls) {
+        Ok(c) => {
+            let db = Database {
+                client: c,
+                tables: vec!(Table::Object, Table::Relation) };
+            Ok(db.add_tables()?)},
+        Err(_) => {
+            println!("can't connect; small wait is in order");
+            thread::sleep(time::Duration::from_secs(5));
+            initialize_db()
+        }
+                }
 }
 
 
