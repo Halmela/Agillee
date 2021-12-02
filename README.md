@@ -18,3 +18,6 @@ Jos esineestä halutaan lapsi, voidaan etsiä tietokannasta jokainen esine, jonk
 Jos esine halutaan poistaa, etsitään samalla kaikki esineet, joiden vanhempi_id on kyseinen esine.
 Käyttäjältä kysytään poistetaanko esineen sisällä olleet esineet, vaihdetaanko niiden vanhempi poistettavan vanhemmaksi, vai pistetäänkö ne johonkin muuhun laatikkoon.
 
+## Asennus
+
+Asenna Docker ja Docker Compose, ja `docker-compose up --build`.
