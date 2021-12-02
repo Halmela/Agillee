@@ -13,10 +13,10 @@ fn main() -> Result<(), Error> {
 	let n = 1000;
 	let os = (0..n).map(|_| Object::new(None, None)).collect();
 	let rels = (0..n).map(|_| (
-        	 rng.gen_range(1,n),
-             rng.gen_range(1,n),
-             if rng.gen() {Some(rng.gen())} else {None},
-             if rng.gen() {Some(rng.gen())} else {None},
+        	 (rng.gen_range(1,n),
+             rng.gen_range(1,n)),
+             (if rng.gen() {Some(rng.gen())} else {None},
+             if rng.gen() {Some(rng.gen())} else {None})
 	)).collect();
 
     println!("gen ready");

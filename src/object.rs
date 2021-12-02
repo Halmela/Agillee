@@ -2,7 +2,7 @@ use postgres::{Error};
 use std::fmt;
 use std::fmt::Write;
 use crate::database::Database;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 
 
 pub struct Object {
@@ -13,7 +13,7 @@ pub struct Object {
 
 pub struct Objects {
 	pub objects:   HashMap<i32, Object>,
-    pub relations: HashSet< (i32, i32) >,
+    pub relations: HashMap<(i32, i32), (Option<bool>, Option<bool>)>,
     database:	   Database
 }
 
@@ -40,7 +40,7 @@ impl Objects {
     pub fn new(db: Database) -> Objects {
 		Objects {
     		objects:   HashMap::new(),
-    		relations: HashSet::new(),
+    		relations: HashMap::new(),
     		database:  db
 		}
     }
@@ -67,17 +67,18 @@ impl Objects {
     	Ok(transaction.commit()?)
 	}
 
-	pub fn insert_relations(&mut self, relations: Vec<(i32, i32, Option<bool>, Option<bool>)>) -> Result<(), Error> {
+	pub fn insert_relations(&mut self, relations: Vec<((i32, i32), (Option<bool>, Option<bool>))>) -> Result<(), Error> {
     	let mut transaction = self.database.client.transaction()?;
     	let stmnt = transaction.prepare(
         	"
             	INSERT INTO Relations AS R (a, b, a2b, b2a)
                 VALUES ($1, $2, $3, $4)
                 ON CONFLICT (a, b) DO UPDATE
-                SET a2b = COALESCE(EXCLUDED.a2b,FALSE) OR R.a2b, b2a = COALESCE(EXCLUDED.b2a,FALSE) OR R.b2a
+                	SET a2b = COALESCE(EXCLUDED.a2b,FALSE) OR R.a2b,
+                    	b2a = COALESCE(EXCLUDED.b2a,FALSE) OR R.b2a
             ;")?;
 
-    	for (a, b, a2b, b2a) in relations {
+    	for ((a, b), (a2b, b2a)) in relations {
         	if a < b {
                 transaction.execute(&stmnt, &[&a, &b, &a2b, &b2a])?;
         	} else {
@@ -92,16 +93,16 @@ impl Objects {
 		let res = self.query_relations(id, rel)?;
 		let mut to_query = vec!();
 
-		for r in res {
-    		if !self.objects.contains_key(&r.0) {
-        		to_query.push(*&r.0);
+		for (s,r) in res {
+    		if !self.objects.contains_key(&s.0) {
+        		to_query.push(*&s.0);
     		}
     		
-    		if !self.objects.contains_key(&r.1) {
-        		to_query.push(*&r.1);
+    		if !self.objects.contains_key(&s.1) {
+        		to_query.push(*&s.1);
     		}
 
-    		self.relations.insert(r);
+    		self.relations.insert(s, r);
 		}
 
 		self.query_objects(to_query)?;
@@ -124,33 +125,34 @@ impl Objects {
     	Ok(transaction.commit()?)
 	}
     
-    fn query_relations(&mut self, id: &i32, rel: Relation) -> Result<Vec<(i32, i32)>, Error> {
+    fn query_relations(&mut self, id: &i32, rel: Relation) -> Result<Vec<((i32, i32), (Option<bool>, Option<bool>))>, Error> {
         let statement = self.database.client.prepare(
             match rel {
-            Relation::Any => 
-                    "SELECT a, b
-                     FROM Relations
-                     WHERE ((a = $1) OR (b = $1)) AND (a2b OR b2a);",
-            Relation::Start => 
-                    "SELECT a, b
-                     FROM Relations
-                     WHERE (a = $1 AND a2b) OR (b = $1 AND b2a);",
-            Relation::Sink =>
-                    "SELECT a, b
-                     FROM Relations
-                     WHERE (a = $1 AND b2a) OR (a = $1 AND a2b);",
-            Relation::Both =>
-                	"SELECT a, b
-                     FROM Relations
-                     WHERE (a = $1 AND a2b AND b2a) OR (b = $1 AND a2b AND b2a);"
+                Relation::Any => 
+                        "SELECT a, b, a2b, b2a
+                         FROM Relations
+                         WHERE ((a = $1) OR (b = $1)) AND (a2b OR b2a);",
+                Relation::Start => 
+                        "SELECT a, b, a2b, b2a
+                         FROM Relations
+                         WHERE (a = $1 AND a2b) OR (b = $1 AND b2a);",
+                Relation::Sink =>
+                        "SELECT a, b, a2b, b2a
+                         FROM Relations
+                         WHERE (a = $1 AND b2a) OR (a = $1 AND a2b);",
+                Relation::Both =>
+                    	"SELECT a, b, a2b, b2a
+                         FROM Relations
+                         WHERE (a = $1 AND a2b AND b2a) OR (b = $1 AND a2b AND b2a);"
         })?;
 		Ok(
     		self.database.client.query(&statement, &[id])?.iter()
-                .map(|r| (r.get("a"), r.get("b")))
+                .map(|r| ((r.get("a"), r.get("b")), (r.get("a2b"), r.get("b2a"))))
                 .collect()
 		)
 
     }
+
 
 	pub fn drop(&mut self) -> Result<(), Error> {
     	Ok(self.database.drop_tables()?)
@@ -200,11 +202,18 @@ impl fmt::Display for Objects {
     	}
 
 		if self.relations.is_empty() {
-        	write!(&mut res, "No objects\n").unwrap();
+        	write!(&mut res, "No relations\n").unwrap();
 		} else {
+    		let c = |b| match b {
+        		Some(true) => '>',
+        		Some(false) => '<',
+        		None => '-'
+    		};
+
         	write!(&mut res, "a       b\n")?;
-            for (a, b) in &self.relations {
-                write!(&mut res, "{:<7} {}\n", a, b)?;
+
+            for ((a, b), (a2b, b2a)) in &self.relations {
+                write!(&mut res, "{:<5} {}-{} {}\n",a,b, c(*a2b), c(*b2a))?;
             }
 		}
         write!(f, "{}", res)
