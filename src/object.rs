@@ -73,9 +73,6 @@ impl Objects {
         	"
             	INSERT INTO Relations AS R (a, b, a2b, b2a)
                 VALUES ($1, $2, $3, $4)
-                ON CONFLICT (a, b) DO UPDATE
-                	SET a2b = COALESCE(EXCLUDED.a2b,FALSE) OR R.a2b,
-                    	b2a = COALESCE(EXCLUDED.b2a,FALSE) OR R.b2a
             ;")?;
 
     	for ((a, b), (a2b, b2a)) in relations {
@@ -204,16 +201,17 @@ impl fmt::Display for Objects {
 		if self.relations.is_empty() {
         	write!(&mut res, "No relations\n").unwrap();
 		} else {
-    		let c = |b| match b {
-        		Some(true) => '>',
-        		Some(false) => '<',
-        		None => '-'
+    		let c = |b,i| match b {
+        		Some(true) if i => '<',
+            	Some(true)      => '>',
+        		Some(false)     => '|',
+        		None            => '-',
     		};
 
         	write!(&mut res, "a       b\n")?;
 
             for ((a, b), (a2b, b2a)) in &self.relations {
-                write!(&mut res, "{:<5} {}-{} {}\n",a,b, c(*a2b), c(*b2a))?;
+                write!(&mut res, "{} {}-{} {}\n",a, c(*a2b,true), c(*b2a,false),b)?;
             }
 		}
         write!(f, "{}", res)
