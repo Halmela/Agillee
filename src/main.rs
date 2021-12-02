@@ -12,17 +12,25 @@ fn main() -> Result<(), Error> {
 
 	let n = 1000;
 	let os = (0..n).map(|_| Object::new(None, None)).collect();
-	let rels = (0..n).map(|_| (rng.gen_range(1,n), rng.gen_range(1,n))).collect();
+	let rels = (0..n).map(|_| (
+        	 rng.gen_range(1,n),
+             rng.gen_range(1,n),
+             if rng.gen() {Some(rng.gen())} else {None},
+             if rng.gen() {Some(rng.gen())} else {None},
+	)).collect();
 
     println!("gen ready");
     objs.insert_objects(os)?;
     println!("objs inserted");
     objs.insert_relations(rels)?;
     println!("rels inserted");
-    //objs.insert_relations(vec!((1,2), (2,3), (3,4), (4,3)))?;
-    objs.add_relations(&1, Relation::In)?;
+
+	//println!("{:?}", objs.query_relations(&1, Relation::Any));
+    
     println!("ins added");
-    objs.add_relations(&1, Relation::Out)?;
+    for i in 0..n {
+        objs.add_relations(&i, Relation::Any)?;
+    }
     println!("{}", &objs);
 
     Ok(())

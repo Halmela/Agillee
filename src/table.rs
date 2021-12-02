@@ -16,16 +16,25 @@ pub enum Table {
 pub fn table_to_scheme(table: &Table) -> &'static str {
 	match table {
     	Table::Object =>
-            "CREATE TABLE objects (
+            "CREATE TABLE Objects (
             	id 	        SERIAL PRIMARY KEY,
             	description TEXT
         	);",
+
+        /**
+         * in: start -> sink
+         * out: sink -> start
+         **/
         Table::Relation =>
-        	"CREATE TABLE relations (
-            	start INTEGER REFERENCES objects(id),
-            	sink  INTEGER REFERENCES objects(id)
+        	"CREATE TABLE Relations (
+            	a    INTEGER REFERENCES Objects(id),
+            	b    INTEGER REFERENCES Objects(id),
+            	a2b  BOOLEAN,
+            	b2a  BOOLEAN,
+            	PRIMARY KEY (a, b),
+            	CHECK (a <= b)
         	);",
-		_ 	   => "CREATE TABLE empty();"
+		//_ 	   => "CREATE TABLE empty();"
 	}
 }
 

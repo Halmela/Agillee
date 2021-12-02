@@ -18,6 +18,7 @@ pub struct Objects {
 }
 
 
+
 impl Object {
     pub fn new(id: Option<&i32>, desc: Option<String>) -> Object {
 		match id {
@@ -45,7 +46,7 @@ impl Objects {
     }
 
 /*
-	fn insert_relations(&mut self, start: &i32, end: &i32, rel: Relation) -> Result<(), Error> {
+	fn insert_relations(&mut self, a: &i32, end: &i32, rel: Relation) -> Result<(), Error> {
     	self.database.client.
     	Ok(())
 	}
@@ -53,7 +54,7 @@ impl Objects {
 
 	pub fn insert_objects(&mut self, objects: Vec<Object>) -> Result<(), Error> {
     	let mut transaction = self.database.client.transaction()?;
-    	let statement = transaction.prepare("INSERT INTO objects (description) VALUES ($1)")?;
+    	let statement = transaction.prepare("INSERT INTO Objects (description) VALUES ($1);")?;
 
     	for o in objects {
         	match o.id {
@@ -66,12 +67,22 @@ impl Objects {
     	Ok(transaction.commit()?)
 	}
 
-	pub fn insert_relations(&mut self, relations: Vec<(i32, i32)>) -> Result<(), Error> {
+	pub fn insert_relations(&mut self, relations: Vec<(i32, i32, Option<bool>, Option<bool>)>) -> Result<(), Error> {
     	let mut transaction = self.database.client.transaction()?;
-    	let statement = transaction.prepare("INSERT INTO relations (start, sink) VALUES ($1, $2)")?;
+    	let stmnt = transaction.prepare(
+        	"
+            	INSERT INTO Relations AS R (a, b, a2b, b2a)
+                VALUES ($1, $2, $3, $4)
+                ON CONFLICT (a, b) DO UPDATE
+                SET a2b = COALESCE(EXCLUDED.a2b,FALSE) OR R.a2b, b2a = COALESCE(EXCLUDED.b2a,FALSE) OR R.b2a
+            ;")?;
 
-    	for (start, sink) in relations {
-            transaction.execute(&statement, &[&start, &sink])?;
+    	for (a, b, a2b, b2a) in relations {
+        	if a < b {
+                transaction.execute(&stmnt, &[&a, &b, &a2b, &b2a])?;
+        	} else {
+                transaction.execute(&stmnt, &[&b, &a, &b2a, &a2b])?;
+        	}
     	}
 
         Ok(transaction.commit()?)
@@ -100,7 +111,7 @@ impl Objects {
 
 	fn query_objects(&mut self, ids: Vec<i32>) -> Result<(), Error> {
     	let mut transaction = self.database.client.transaction()?;
-    	let statement = transaction.prepare("SELECT id, description FROM objects WHERE id = $1")?;
+    	let statement = transaction.prepare("SELECT id, description FROM Objects WHERE id = $1;")?;
     	//let mut objs: Vec<(i32, String)> = vec!();
 
 		for id in ids {
@@ -114,29 +125,31 @@ impl Objects {
 	}
     
     fn query_relations(&mut self, id: &i32, rel: Relation) -> Result<Vec<(i32, i32)>, Error> {
-        match rel {
-            Relation::Any => Ok(self.database.client.query(
-                    "SELECT start, sink
-                     FROM relations
-                     WHERE (start = $1) OR (sink = $1);", &[id])?.iter()
-                        .map(|r| (r.get("start"), r.get("sink")))
-                        .collect()),
-            Relation::In => Ok(self.database.client.query(
-                    "SELECT start, sink
-                     FROM relations
-                     WHERE (start = $1) AND sink NOT IN (
-                         SELECT start FROM relations WHERE (sink = $1));", &[id])?.iter()
-                        .map(|r| (r.get("start"), r.get("sink")))
-                        .collect()),
-            Relation::Out => Ok(self.database.client.query(
-                    "SELECT start, sink
-                     FROM relations
-                     WHERE (sink = $1) AND start NOT IN (
-                         SELECT sink FROM relations WHERE (start = $1));", &[id])?.iter()
-                        .map(|r| (r.get("start"), r.get("sink")))
-                        .collect()),
-            _  => Ok(vec!())
-        }
+        let statement = self.database.client.prepare(
+            match rel {
+            Relation::Any => 
+                    "SELECT a, b
+                     FROM Relations
+                     WHERE ((a = $1) OR (b = $1)) AND (a2b OR b2a);",
+            Relation::Start => 
+                    "SELECT a, b
+                     FROM Relations
+                     WHERE (a = $1 AND a2b) OR (b = $1 AND b2a);",
+            Relation::Sink =>
+                    "SELECT a, b
+                     FROM Relations
+                     WHERE (a = $1 AND b2a) OR (a = $1 AND a2b);",
+            Relation::Both =>
+                	"SELECT a, b
+                     FROM Relations
+                     WHERE (a = $1 AND a2b AND b2a) OR (b = $1 AND a2b AND b2a);"
+        })?;
+		Ok(
+    		self.database.client.query(&statement, &[id])?.iter()
+                .map(|r| (r.get("a"), r.get("b")))
+                .collect()
+		)
+
     }
 
 	pub fn drop(&mut self) -> Result<(), Error> {
@@ -146,8 +159,8 @@ impl Objects {
 
 
 pub enum Relation {
-	In,
-	Out,
+	Start,
+	Sink,
 	Both,
 	Any
 }
@@ -189,9 +202,9 @@ impl fmt::Display for Objects {
 		if self.relations.is_empty() {
         	write!(&mut res, "No objects\n").unwrap();
 		} else {
-        	write!(&mut res, "start\tsink\n")?;
-            for (start, sink) in &self.relations {
-                write!(&mut res, "{:<7} {}\n", start, sink)?;
+        	write!(&mut res, "a       b\n")?;
+            for (a, b) in &self.relations {
+                write!(&mut res, "{:<7} {}\n", a, b)?;
             }
 		}
         write!(f, "{}", res)
