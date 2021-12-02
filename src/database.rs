@@ -49,7 +49,7 @@ impl Database {
         match res {
             Ok(_) 		=> Ok(()),
             Err(e) => match e.code().unwrap().code() {
-                "42P07" => Ok(()), // Error code for creating a duplicate table
+                "42P07" => {println!("tables already exist"); Ok(())}, // Error code for creating a duplicate table
                 _	    => Err(e)}
         }
     }
