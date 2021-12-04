@@ -21,16 +21,19 @@ pub fn table_to_scheme(table: &Table) -> &'static str {
             	description TEXT
         	);",
 
-        Table::Relation =>
+        Table::Relation  =>
         	"CREATE TABLE Relations (
-            	id   SERIAL PRIMARY KEY,
             	a    INTEGER REFERENCES Objects(id),
             	b    INTEGER REFERENCES Objects(id),
             	a2b  BOOLEAN,
             	b2a  BOOLEAN,
+            	UNIQUE (a, b),
             	CHECK (a <= b)
         	);",
 		//_ 	   => "CREATE TABLE empty();"
 	}
 }
 
+
+pub trait Tabble {
+}

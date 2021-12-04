@@ -1,29 +1,30 @@
-# Dockerfile for creating a statically-linked Rust application using docker's
-# multi-stage build feature. This also leverages the docker build cache to avoid
-# re-downloading dependencies if they have not changed.
-FROM rust:alpine AS builder
+FROM rust:1.49 as build
 
-RUN apk add --no-cache musl-dev openssl-dev
+# create a new empty shell project
+RUN USER=root cargo new --bin agillee
+WORKDIR /agillee
 
-WORKDIR /usr/src
+# copy over your manifests
+COPY ./Cargo.lock ./Cargo.lock
+COPY ./Cargo.toml ./Cargo.toml
 
-# Download the target for static linking.
-RUN rustup target add x86_64-unknown-linux-musl
+# this build step will cache your dependencies
+RUN cargo build --release
+RUN rm src/*.rs
 
-# Create a dummy project and build the app's dependencies.
-# If the Cargo.toml or Cargo.lock files have not changed,
-# we can use the docker build cache and skip these (typically slow) steps.
-RUN USER=root cargo new agillee
-WORKDIR /usr/src/agillee
-COPY Cargo.toml Cargo.lock ./
-RUN cargo build --release --target x86_64-unknown-linux-musl
+# copy your source tree
+COPY ./src ./src
 
-# Copy the source and build the application.
-COPY src ./src
-RUN cargo install --target x86_64-unknown-linux-musl --path .
+# build for release
+RUN rm ./target/release/deps/agillee*
+RUN cargo build --release
 
-# Copy the statically-linked binary into a scratch container.
-FROM scratch
-COPY --from=builder /usr/local/cargo/bin/agillee .
-USER 1000
+# our final base
+FROM rust:1.49-slim-buster
+
+# copy the build artifact from the build stage
+COPY --from=build /agillee/target/release/agillee .
+
+# set the startup command to run your binary
 CMD ["./agillee"]
+
