@@ -136,21 +136,16 @@ impl Database {
      * Query relations of a given id and relation from database.
      */
     pub fn query_relations(&mut self, id: &i32, rel: Relation) -> Result<Vec<((i32, i32), (Option<bool>, Option<bool>))>, Error> {
-        let mut s = String::from("SELECT a, b, a2b, b2a FROM Relations ");
+        let mut s = String::from("SELECT a, b, a2b, b2a FROM Relations WHERE");
+        s.push_str(
             match rel {
-                Relation::Any =>  s.push_str("
-                         WHERE ((a = $1) OR (b = $1)) AND (a2b OR b2a);"),
-                Relation::Start =>  s.push_str("
-                         WHERE (a = $1 AND a2b) OR (b = $1 AND b2a);"),
-                Relation::Sink => s.push_str("
-                         WHERE (a = $1 AND b2a) OR (a = $1 AND a2b);"),
-                Relation::Both => s.push_str("
-                         WHERE (a = $1 AND a2b AND b2a) OR (b = $1 AND a2b AND b2a);"),
-                Relation::OneWay => s.push_str("
-                         WHERE (a = $1 OR b = $1) AND ((a2b AND NOT b2a) OR (b2a AND NOT a2b));"),
-                Relation::Closed => s.push_str("
-                         WHERE (a = $1 OR b = $1) AND NOT (a2b OR b2a);")
-        };
+                Relation::Any    => "((a = $1) OR (b = $1)) AND (a2b OR b2a);",
+                Relation::Start  => "(a = $1 AND a2b) OR (b = $1 AND b2a);",
+                Relation::Sink   => "(a = $1 AND b2a) OR (a = $1 AND a2b);",
+                Relation::Both   => "(a = $1 OR b = $1) AND a2b AND b2a;",
+                Relation::OneWay => "(a = $1 OR b = $1) AND ((a2b AND NOT b2a) OR (b2a AND NOT a2b));",
+                Relation::Closed => "(a = $1 OR b = $1) AND NOT (a2b OR b2a);"
+           });
         let statement = self.client.prepare(&s)?;
 		Ok(
     		self.client.query(&statement, &[id])?.iter()
