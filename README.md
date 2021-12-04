@@ -20,4 +20,4 @@ Käyttäjältä kysytään poistetaanko esineen sisällä olleet esineet, vaihde
 
 ## Asennus
 
-Asenna Docker ja Docker Compose, ja `docker-compose up --build`.
+Asenna Docker ja Docker Compose, ja suorita `docker-compose up --build`.

@@ -3,6 +3,7 @@ use std::fmt;
 use std::fmt::Write;
 use crate::database::Database;
 use std::collections::{HashMap};
+use std::hash::{Hash, Hasher};
 
 
 pub struct Object {
@@ -17,7 +18,11 @@ pub struct Objects {
     database:	   Database
 }
 
-
+impl Hash for Object {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
+}
 
 impl Object {
     pub fn new(id: Option<&i32>, desc: Option<String>) -> Object {
@@ -52,42 +57,17 @@ impl Objects {
 	}
 */
 
-	pub fn insert_objects(&mut self, objects: Vec<Object>) -> Result<(), Error> {
-    	let mut transaction = self.database.client.transaction()?;
-    	let statement = transaction.prepare("INSERT INTO Objects (description) VALUES ($1);")?;
 
-    	for o in objects {
-        	match o.id {
-            	Some(_) => {0},
-            	None     => {transaction.execute(&statement, &[&o.description])?}
-        	};
-    	}
-
-    	
-    	Ok(transaction.commit()?)
+	pub fn add_relations(&mut self, rels: Vec<((i32, i32), (Option<bool>, Option<bool>))>) -> Result<(), Error> {
+    	Ok(self.database.insert_relations(rels)?)
 	}
 
-	pub fn insert_relations(&mut self, relations: Vec<((i32, i32), (Option<bool>, Option<bool>))>) -> Result<(), Error> {
-    	let mut transaction = self.database.client.transaction()?;
-    	let stmnt = transaction.prepare(
-        	"
-            	INSERT INTO Relations AS R (a, b, a2b, b2a)
-                VALUES ($1, $2, $3, $4)
-            ;")?;
 
-    	for ((a, b), (a2b, b2a)) in relations {
-        	if a < b {
-                transaction.execute(&stmnt, &[&a, &b, &a2b, &b2a])?;
-        	} else {
-                transaction.execute(&stmnt, &[&b, &a, &b2a, &a2b])?;
-        	}
-    	}
-
-        Ok(transaction.commit()?)
-	}
-
-	pub fn add_relations(&mut self, id: &i32, rel: Relation) -> Result<(), Error> {
-		let res = self.query_relations(id, rel)?;
+	/*
+     * Fetch relations matching to a given 
+     */
+	pub fn get_relations(&mut self, id: &i32, rel: Relation) -> Result<(), Error> {
+		let res = self.database.query_relations(id, rel)?;
 		let mut to_query = vec!();
 
 		for (s,r) in res {
@@ -102,55 +82,34 @@ impl Objects {
     		self.relations.insert(s, r);
 		}
 
-		self.query_objects(to_query)?;
+		for o in self.database.query_objects(to_query)? {
+    		match o.id {
+        		Some(id) => {self.objects.insert(id, o);},
+        		_        => {}
+    		}
+		}
 
 		Ok(())
 	}
 
-	fn query_objects(&mut self, ids: Vec<i32>) -> Result<(), Error> {
-    	let mut transaction = self.database.client.transaction()?;
-    	let statement = transaction.prepare("SELECT id, description FROM Objects WHERE id = $1;")?;
-    	//let mut objs: Vec<(i32, String)> = vec!();
 
-		for id in ids {
-    		let obj = transaction.query_one(&statement, &[&id])?;
-    		self.objects.insert(id, Object {
-    			id: obj.get("id"),
-    			description: obj.get("description") });
+	/*
+     * Add objects to self and insert them to database.
+     */
+	pub fn add_objects(&mut self, objs: Vec<Object>) -> Result<(), Error> {
+    	/*
+		for o in objs {
+    		match o.id {
+        		Some(id) => {self.objects.insert(id, o);},
+        		_        => {}
+    		}
 		}
-		
-    	Ok(transaction.commit()?)
+		*/
+    	self.database.insert_objects(objs)?;
+    	Ok(())
 	}
-    
-    fn query_relations(&mut self, id: &i32, rel: Relation) -> Result<Vec<((i32, i32), (Option<bool>, Option<bool>))>, Error> {
-        let statement = self.database.client.prepare(
-            match rel {
-                Relation::Any => 
-                        "SELECT a, b, a2b, b2a
-                         FROM Relations
-                         WHERE ((a = $1) OR (b = $1)) AND (a2b OR b2a);",
-                Relation::Start => 
-                        "SELECT a, b, a2b, b2a
-                         FROM Relations
-                         WHERE (a = $1 AND a2b) OR (b = $1 AND b2a);",
-                Relation::Sink =>
-                        "SELECT a, b, a2b, b2a
-                         FROM Relations
-                         WHERE (a = $1 AND b2a) OR (a = $1 AND a2b);",
-                Relation::Both =>
-                    	"SELECT a, b, a2b, b2a
-                         FROM Relations
-                         WHERE (a = $1 AND a2b AND b2a) OR (b = $1 AND a2b AND b2a);"
-        })?;
-		Ok(
-    		self.database.client.query(&statement, &[id])?.iter()
-                .map(|r| ((r.get("a"), r.get("b")), (r.get("a2b"), r.get("b2a"))))
-                .collect()
-		)
 
-    }
-
-
+	
 	pub fn drop(&mut self) -> Result<(), Error> {
     	Ok(self.database.drop_tables()?)
 	}
@@ -161,6 +120,8 @@ pub enum Relation {
 	Start,
 	Sink,
 	Both,
+	OneWay,
+	Closed,
 	Any
 }
 
@@ -201,17 +162,17 @@ impl fmt::Display for Objects {
 		if self.relations.is_empty() {
         	write!(&mut res, "No relations\n").unwrap();
 		} else {
-    		let c = |b,i| match b {
-        		Some(true) if i => '<',
-            	Some(true)      => '>',
-        		Some(false)     => '|',
-        		None            => '-',
+    		let c = |o,b| match (o,b) {
+        		(Some(true),false) => '>',
+        		(Some(true),true) => '<',
+        		(Some(false),_) => '|',
+        		_ => '-'
     		};
 
         	write!(&mut res, "a       b\n")?;
 
             for ((a, b), (a2b, b2a)) in &self.relations {
-                write!(&mut res, "{} {}-{} {}\n",a, c(*a2b,true), c(*b2a,false),b)?;
+                write!(&mut res, "{:<4} {}-{}  {}\n",a, c(*b2a,true), c(*a2b,false),b)?;
             }
 		}
         write!(f, "{}", res)
