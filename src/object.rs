@@ -5,7 +5,7 @@ use crate::database::Database;
 use std::collections::{HashMap};
 use std::hash::{Hash, Hasher};
 
-
+#[derive(Clone)]
 pub struct Object {
     pub id: Option<i32>,
     pub description: Option<String>
@@ -97,15 +97,20 @@ impl Objects {
      * Add objects to self and insert them to database.
      */
 	pub fn add_objects(&mut self, objs: Vec<Object>) -> Result<(), Error> {
-    	/*
-		for o in objs {
+    	
+		for o in &objs {
     		match o.id {
-        		Some(id) => {self.objects.insert(id, o);},
+        		Some(id) => {self.objects.insert(id, o.clone());},
         		_        => {}
     		}
 		}
-		*/
-    	self.database.insert_objects(objs)?;
+		
+    	for o in self.database.insert_objects(objs)? {
+        	match o.id {
+            	Some(id) => {self.objects.insert(id, o);},
+            	_        => {}
+        	}
+    	}
     	Ok(())
 	}
 
@@ -141,8 +146,12 @@ impl From<Row> for Object {
 impl fmt::Display for Object {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     	let id = self.id.unwrap_or_default();
+    	let desc = match &self.description {
+        	Some(s) => s,
+        	None    => ""
+	};
     	
-    	write!(f, "id: {}", id)
+    	write!(f, "id: {}\tdescription: {}", id, desc)
 	}
 }
 

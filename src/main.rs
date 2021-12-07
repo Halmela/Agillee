@@ -1,13 +1,19 @@
-use rand::Rng;
+//use rand::Rng;
 use postgres::{Error};
 use agillee::object::*;
 //use agillee::table::*;
 use agillee::database::*;
+use agillee::cli::*;
 
 
 fn main() -> Result<(), Error> {
     let db = initialize_db()?;
-    let mut objs = Objects::new(db);
+    let objs = Objects::new(db);
+    let mut cli = CLI::new(objs);
+
+    cli.start()?;
+
+    /*
     let mut rng = rand::thread_rng();
 
 	let n = 100;
@@ -29,7 +35,7 @@ fn main() -> Result<(), Error> {
         objs.get_relations(&i, Relation::Closed)?;
     }
     println!("{}", &objs);
-
+*/
     Ok(())
 }
 

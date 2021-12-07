@@ -13,10 +13,11 @@ pub fn initialize_db() -> Result<Database, Error> {
                 "postgresql://postgres:psql@postgres:5432/agillee",
                 NoTls) {
         Ok(c) => {
-            let db = Database {
+            let mut db = Database {
                 client: c,
                 tables: vec!(Table::Object, Table::Relation) };
-            Ok(db.add_tables()?)},
+            db.add_tables()?;
+            Ok(db)},
         Err(_) => {
             println!("can't connect; small wait is in order");
             thread::sleep(time::Duration::from_secs(5));
@@ -36,20 +37,20 @@ impl Database {
     /*
      * Add tables to database.
      */
-    fn add_tables(mut self) -> Result<Database, Error> {
+    fn add_tables(&mut self) -> Result<(), Error> {
     	for table in &self.tables {
         	let transaction = self.client.transaction()?;
         	Database::add_scheme(table_to_scheme(table), transaction)?;
+            
     	}
-
-    	Ok(self)
+    	Ok(())
     }
 
 	/*
      * Create tables to database. Will not error if the tables exist.
      */
     fn add_scheme(scheme: &str, mut transaction: Transaction) -> Result<(), Error> {
-        let res = transaction.execute(scheme, &[]);
+        let res = transaction.batch_execute(scheme);
     	transaction.commit()?;
 
         match res {
@@ -72,19 +73,27 @@ impl Database {
 	/*
      * Insert objects to database.
      */
-	pub fn insert_objects(&mut self, objects: Vec<Object>) -> Result<(), Error> {
+	pub fn insert_objects(&mut self, objects: Vec<Object>) -> Result<Vec<Object>, Error> {
     	let mut transaction = self.client.transaction()?;
-    	let statement = transaction.prepare("INSERT INTO Objects (description) VALUES ($1);")?;
+    	let statement = transaction.prepare(
+        	"INSERT INTO Objects (description)
+             VALUES ($1)
+             RETURNING *;")?;
 
+		let mut os = vec!();
     	for o in objects {
         	match o.id {
-            	Some(_) => {0},
-            	None     => {transaction.execute(&statement, &[&o.description])?}
+            	Some(_) => {},
+            	None     => {
+                	let obj = transaction.query_one(&statement, &[&o.description])?;
+                	os.push( Object {
+                    			id: obj.get("id"),
+                    			description: obj.get("description") });
+            	}
         	};
     	}
-
-    	
-    	Ok(transaction.commit()?)
+        transaction.commit()?;
+    	Ok(os)
 	}
 
 	/*
@@ -130,6 +139,7 @@ impl Database {
 		transaction.commit()?;
     	Ok(objects)
 	}
+
 
 
     /*

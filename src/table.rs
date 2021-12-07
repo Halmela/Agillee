@@ -19,7 +19,8 @@ pub fn table_to_scheme(table: &Table) -> &'static str {
             "CREATE TABLE Objects (
             	id 	        SERIAL PRIMARY KEY,
             	description TEXT
-        	);",
+        	);
+        	INSERT INTO Objects (description) VALUES ('Tangible'), ('Intangible')",
 
         Table::Relation  =>
         	"CREATE TABLE Relations (
