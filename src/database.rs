@@ -61,7 +61,7 @@ impl Database {
         match res {
             Ok(_) 		=> Ok(()),
             Err(e) => match e.code().unwrap().code() {
-                "42P07" => {println!("tables already exist"); Ok(())}, // Error code for creating a duplicate table
+                "42P07" => {Ok(())}, // Error code for creating a duplicate table
                 _	    => Err(e)}
         }
     }
@@ -108,8 +108,8 @@ impl Database {
             	INSERT INTO Relations AS R (a, b, a2b, b2a)
                 VALUES ($1, $2, $3, $4)
                 ON CONFLICT (a, b) DO UPDATE
-                	SET a2b = COALESCE(EXCLUDED.a2b,R.a2b),
-                    	b2a = COALESCE(EXCLUDED.b2a,R.b2a)
+                	SET a2b = EXCLUDED.a2b,
+                    	b2a = EXCLUDED.b2a
                 RETURNING a,b,a2b,b2a
             ;")?;
 
@@ -205,7 +205,6 @@ impl Database {
     			row.get("b2a")),
     		));
 		}
-		println!("{:?}",relations);
 		Ok(relations)
 	}
 

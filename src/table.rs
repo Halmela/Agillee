@@ -23,7 +23,6 @@ pub fn table_to_scheme(table: &Table) -> &'static str {
         	);
         	INSERT INTO Objects (description) VALUES ('Root'), ('Tangible'), ('Intangible')",
 
-		// Start relations
         Table::Relation  =>
         	"CREATE TABLE Relations (
             	a    INTEGER REFERENCES Objects(id),

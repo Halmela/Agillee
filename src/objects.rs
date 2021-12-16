@@ -143,7 +143,7 @@ impl fmt::Display for Objects {
 
         	write!(&mut res, "a         b\n")?;
 
-            for ((a, b), (a2b, b2a)) in &self.relations {
+            for ((a, b), (a2b, b2a)) in self.relations.iter().sorted() {
                 write!(&mut res, "{:<4} {}-{}  {}\n",a, c(*b2a,true), c(*a2b,false),b)?;
             }
 		}

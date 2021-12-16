@@ -150,7 +150,7 @@ fn relation_help() {
         		\t\tX\t both ways (same as <>)\n\
         		\t\t|\t no way (same as ||)\n\
         		\t\t~\t both empty (same as ~~)\n\
-            	\t\t";
+            this will overwrite any previous relation";
     println!("{}", help);
 }
 /*
