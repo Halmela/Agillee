@@ -1,7 +1,7 @@
 use std::fmt;
 use std::hash::{Hash, Hasher};
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub struct Object {
     pub id: Option<i32>,
     pub description: Option<String>
@@ -12,6 +12,7 @@ impl Hash for Object {
         self.id.hash(state);
     }
 }
+
 
 impl Object {
     pub fn new(id: Option<&i32>, desc: Option<String>) -> Object {

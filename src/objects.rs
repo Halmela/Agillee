@@ -2,6 +2,7 @@ use postgres::{Error};
 use std::fmt;
 use std::fmt::Write;
 use std::collections::{HashMap};
+use itertools::Itertools;
 use crate::database::Database;
 use crate::object::Object;
 
@@ -13,12 +14,14 @@ pub struct Objects {
 }
 
 impl Objects {
-    pub fn new(db: Database) -> Objects {
-		Objects {
+    pub fn new(db: Database) -> Result<Objects, Error> {
+		let mut os = Objects {
     		objects:   HashMap::new(),
     		relations: HashMap::new(),
     		database:  db
-		}
+		};
+		os.get_relations(&1, Relation::Any)?;
+		Ok(os)
     }
 
 /*
@@ -28,9 +31,15 @@ impl Objects {
 	}
 */
 
-
 	pub fn add_relations(&mut self, rels: Vec<((i32, i32), (Option<bool>, Option<bool>))>) -> Result<(), Error> {
     	Ok(self.database.insert_relations(rels)?)
+	}
+
+	pub fn add_relation(&mut self, a: i32, b: i32, rel: Relation) -> Result<(), Error> {
+    	self.database.insert_relation(a.clone(), b.clone(), rel)?;
+    	self.get_relations(&a, Relation::Any)?;
+    	self.get_relations(&b, Relation::Any)?;
+    	Ok(())
 	}
 
 
@@ -54,13 +63,31 @@ impl Objects {
 		}
 
 		for o in self.database.query_objects(to_query)? {
-    		match o.id {
-        		Some(id) => {self.objects.insert(id, o);},
-        		_        => {}
+    		if let Some(id) = o.id {
+        		self.objects.insert(id, o);
     		}
 		}
 
 		Ok(())
+	}
+
+	pub fn get_all_objects(&mut self) -> Result<(), Error> {
+    	for o in self.database.query_all_objects()? {
+    		match o.id {
+        		Some(id) => {self.objects.insert(id, o);},
+        		_        => {}
+    		}
+    	}
+
+    	Ok(())
+	}
+
+	pub fn get_all_relations(&mut self) -> Result<(), Error> {
+    	for (o,r) in self.database.query_all_relations()? {
+        	self.relations.insert(o,r);
+    	}
+
+    	Ok(())
 	}
 
 
@@ -68,7 +95,6 @@ impl Objects {
      * Add objects to self and insert them to database.
      */
 	pub fn add_objects(&mut self, objs: Vec<Object>) -> Result<(), Error> {
-    	
 		for o in &objs {
     		match o.id {
         		Some(id) => {self.objects.insert(id, o.clone());},
@@ -95,12 +121,14 @@ impl fmt::Display for Objects {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     	let mut res = String::new();
 
+
     	if self.objects.is_empty() {
         	write!(&mut res, "No objects\n").unwrap();
     	} else {
-            for (_, o) in &self.objects {
+        	for (_,o) in self.objects.iter().sorted() {
             	write!(&mut res, "{}\n", o.to_string()).unwrap();
-            }
+        	}
+
     	}
 
 		if self.relations.is_empty() {
@@ -110,10 +138,10 @@ impl fmt::Display for Objects {
         		(Some(true),false) => '>',
         		(Some(true),true) => '<',
         		(Some(false),_) => '|',
-        		_ => '-'
+        		_ => '~'
     		};
 
-        	write!(&mut res, "a       b\n")?;
+        	write!(&mut res, "a         b\n")?;
 
             for ((a, b), (a2b, b2a)) in &self.relations {
                 write!(&mut res, "{:<4} {}-{}  {}\n",a, c(*b2a,true), c(*a2b,false),b)?;
@@ -124,12 +152,14 @@ impl fmt::Display for Objects {
 }
 
 
+#[derive(Debug)]
 pub enum Relation {
-	Start,
-	Sink,
+	Start(Option<bool>),
+	Sink(Option<bool>),
 	Both,
 	OneWay,
 	Closed,
-	Any
+	Any,
+	Empty
 }
 

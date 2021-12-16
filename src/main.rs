@@ -8,7 +8,7 @@ use agillee::cli::*;
 
 fn main() -> Result<(), Error> {
     let db = initialize_db()?;
-    let objs = Objects::new(db);
+    let objs = Objects::new(db)?;
     let mut cli = CLI::new(objs);
 
     cli.start()?;

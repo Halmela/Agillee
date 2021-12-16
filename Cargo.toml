@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 rand = "0.7"
 postgres = "0.18"
+itertools = "0.10"
