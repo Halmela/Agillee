@@ -8,9 +8,13 @@ use std::{thread, time};
 
 
 pub fn initialize_db() -> Result<Database, Error> {
-	//let schema = Object { id: None, parent: None };
+    /*
+     * "host=localhost port=5432 dbname=agillee user=postgres"
+     * "postgresql://postgres:psql@postgres:5432/agillee"
+     */
+
 	match Client::connect(
-                "postgresql://postgres:psql@postgres:5432/agillee",
+                "host=localhost port=5432 dbname=agillee user=postgres",
                 NoTls) {
         Ok(c) => {
             let mut db = Database {
