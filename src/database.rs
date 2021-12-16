@@ -2,6 +2,7 @@ use postgres::{Client, NoTls, Error, Transaction};
 //use agillee::table::*;
 use crate::table::*;
 use crate::object::*;
+use crate::objects::*;
 use std::{thread, time};
 
 //use crate::object::*;

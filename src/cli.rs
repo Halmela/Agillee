@@ -1,4 +1,5 @@
 use crate::object::*;
+use crate::objects::*;
 use std::io;
 use postgres::{Error};
 
@@ -21,7 +22,7 @@ impl CLI {
                 .expect("Failed to read line");
 
 			match cmd.as_str().trim() {
-    			"a" => self.add_object()?,
+    			"ao" => self.add_object()?,
         		"p" => println!("{}", self.objects),
         		"h" => help(),
         		"x" => {self.objects.drop()?; return Ok(())},
