@@ -48,10 +48,25 @@ impl CLI {
             .read_line(&mut desc)
             .ok()
             .expect("Failed to read line");
-        self.objects.add_objects(
+
+		println!("Based on what? (t)angible or (i)ntangible?");
+		let mut q = String::new();
+        io::stdin()
+            .read_line(&mut q)
+            .ok()
+            .expect("Failed to read line");
+
+        let obj = self.objects.add_objects(
             vec!(
                 Object {id: None, description: Some(desc.trim().to_string())}
-            ))?;
+            ))?.pop().unwrap();
+
+		match q.trim() {
+    		"i" => {},
+    		"t" => {},
+    		_   => {}
+		}
+        
         Ok(())
     }
 

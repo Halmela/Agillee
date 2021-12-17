@@ -94,21 +94,22 @@ impl Objects {
 	/*
      * Add objects to self and insert them to database.
      */
-	pub fn add_objects(&mut self, objs: Vec<Object>) -> Result<(), Error> {
+	pub fn add_objects(&mut self, objs: Vec<Object>) -> Result<(Vec<i32>), Error> {
 		for o in &objs {
     		match o.id {
         		Some(id) => {self.objects.insert(id, o.clone());},
         		_        => {}
     		}
 		}
-		
+
+		let mut ids = vec!();
     	for o in self.database.insert_objects(objs)? {
         	match o.id {
-            	Some(id) => {self.objects.insert(id, o);},
+            	Some(id) => {ids.push(id); self.objects.insert(id, o);},
             	_        => {}
         	}
     	}
-    	Ok(())
+    	Ok(ids)
 	}
 
 	

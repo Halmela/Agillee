@@ -237,10 +237,10 @@ fn relation_as_condition(rel: Relation) -> String {
         Relation::Any      => {return "((a = $1) OR (b = $1));".to_string() },
         Relation::Start(c) => {return "(a = $1 AND (a2b=REP) AND NOT COALESCE(b2a,FALSE))\
             			            OR (b = $1 AND (b2a=REP) AND NOT COALSSCE(a2b,FALSE));"
-                			    .replace("REP",f(c.clone())) },
+                			    .replace("REP",f(c)) },
         Relation::Sink(c)  => {return "(a = $1 AND (b2a=REP) AND NOT COALESCE(a2b,FALSE))\
             			            OR (a = $1 AND (a2b=REP) AND NOT COALSSCE(b2a,FALSE));"
-                			    .replace("REP",f(c.clone())) },
+                			    .replace("REP",f(c)) },
         Relation::Both     => {return "(a = $1 OR b = $1) AND a2b AND b2a;".to_string() },
         Relation::OneWay   => {return "(a = $1 OR b = $1)\
             			          AND ((a2b AND NOT COALESCE(b2a,FALSE))
