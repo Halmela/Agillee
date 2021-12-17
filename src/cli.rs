@@ -58,7 +58,11 @@ impl CLI {
 
         let obj = self.objects.add_objects(
             vec!(
-                Object {id: None, description: Some(desc.trim().to_string())}
+                Object {
+                    id: None,
+                    description: Some(desc.trim().to_string()),
+                    form: None
+                }
             ))?.pop().unwrap();
 
 		match q.trim() {
@@ -161,10 +165,12 @@ fn relation_help() {
             \tif there are two symbols, first one corresponds to the relation from b to a,\n\
             \tand second one to the relation from a to b\n\
             \t so a |> b is allowed, but a |< b is not\n\
-            \tfor convenience you can use only > or < for their relations, or\n\
-        		\t\tX\t both ways (same as <>)\n\
-        		\t\t|\t no way (same as ||)\n\
-        		\t\t~\t both empty (same as ~~)\n\
+            \tfor convenience you can use \n\
+                \t\t>\t same as ~>\n\
+                \t\t<\t same as <~\n\
+        		\t\tX\t same as <>\n\
+        		\t\t|\t same as ||\n\
+        		\t\t~\t same as ~~\n\
             this will overwrite any previous relation";
     println!("{}", help);
 }

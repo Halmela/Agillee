@@ -4,7 +4,8 @@ use std::hash::{Hash, Hasher};
 #[derive(Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub struct Object {
     pub id: Option<i32>,
-    pub description: Option<String>
+    pub description: Option<String>,
+    pub form: Option<Form>
 }
 
 impl Hash for Object {
@@ -15,17 +16,19 @@ impl Hash for Object {
 
 
 impl Object {
-    pub fn new(id: Option<&i32>, desc: Option<String>) -> Object {
+    pub fn new(id: Option<&i32>, desc: Option<String>, form: Option<Form>) -> Object {
 		match id {
     		Some(id) =>
         		Object {
             		id: Some(*id),
-            		description: desc
+            		description: desc,
+            		form: form
         		},
         	None     =>
         		Object {
             		id: None,
-            		description: desc
+            		description: desc,
+            		form: form
         		}
 		}
     }
@@ -37,8 +40,20 @@ impl fmt::Display for Object {
     	let desc = match &self.description {
         	Some(s) => s,
         	None    => ""
-	};
+		};
+		let form = match &self.form {
+    		Some(Form::Tangible) => "tangible",
+    		Some(Form::Intangible) => "intangible",
+    		None => "formless"
+		};
     	
-    	write!(f, "id: {}\tdescription: {}", id, desc)
+    	write!(f, "id: {}\tdescription: {}\t{}", id, desc, form)
 	}
+}
+
+
+#[derive(Clone, Eq, PartialEq, PartialOrd, Ord)]
+pub enum Form {
+    Tangible,
+    Intangible
 }

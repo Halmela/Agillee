@@ -93,7 +93,8 @@ impl Database {
                 	let obj = transaction.query_one(&statement, &[&o.description])?;
                 	os.push( Object {
                     			id: obj.get("id"),
-                    			description: obj.get("description") });
+                    			description: obj.get("description"),
+                				form: None	});
             	}
         	};
     	}
@@ -179,7 +180,9 @@ impl Database {
     		let obj = transaction.query_one(&statement, &[&id])?;
     		objects.push(Object {
     			id: obj.get("id"),
-    			description: obj.get("description") });
+    			description: obj.get("description"),
+    			form: None
+    		});
 		}
 		transaction.commit()?;
     	Ok(objects)
@@ -190,7 +193,9 @@ impl Database {
 		for row in self.client.query("SELECT * FROM Objects", &[])? {
     		objects.push(Object {
     			id: row.get("id"),
-    			description: row.get("description") });
+    			description: row.get("description"),
+    			form: None
+    		});
 		}
 		Ok(objects)
 	}
