@@ -76,11 +76,21 @@ impl Database {
         Ok(())
     }
 
+	pub fn create_edge(&mut self, e: Edge) -> Result<Edge, Error> {
+    	let mut transaction = self.client.transaction()?;
+    	let edge = Database::insert_edge(e, transaction.transaction()?)?;
+
+    	match edge.a {
+        	Some(_) => {println!("edge addition was success"); transaction.commit()?},
+        	_       => {println!("edge addition was failure"); transaction.rollback()?}
+    	}
+
+		Ok(edge)
+	}
 
     pub fn create_object(&mut self, o: Object, r: i32) -> Result<Object, Error> {
         let mut transaction = self.client.transaction()?;
         let obj = Database::insert_object(o, transaction.transaction()?)?;
-        println!("obj: {}", obj);
 
         let f_edge = match obj.form {
             Some(Form::Tangible)   => Edge::new(Some(2),obj.id,Some(2),Some(4)),
@@ -97,8 +107,8 @@ impl Database {
         println!("{}", r_edge);
 
         match (obj.id, f_edge.a, r_edge.a) {
-            (Some(_), Some(_), Some(_)) => {println!("success"); transaction.commit()?},
-            _ => {println!("failure");transaction.rollback()?}
+            (Some(_), Some(_), Some(_)) => {println!("object addition was success"); transaction.commit()?},
+            _ => {println!("object addition was failure");transaction.rollback()?}
         }
 
 		Ok(obj)
