@@ -18,7 +18,7 @@ impl CLI {
         self.objects.get_all_objects()?;
         self.objects.get_all_relations()?;
         self.main_loop()?;
-        //self.objects.drop()?;
+        self.objects.drop()?;
         Ok(())
     }
 

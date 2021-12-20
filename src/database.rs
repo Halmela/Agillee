@@ -75,6 +75,11 @@ impl Database {
         Ok(())
     }
 
+    pub fn insert_object(&mut self, object: Object) -> Result<Object, Error> {
+
+		Ok(object)
+    }
+
 	/*
      * Insert objects to database.
      */
