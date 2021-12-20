@@ -45,10 +45,13 @@ pub fn table_to_scheme(table: &Table) -> &'static str {
             	a2b  INTEGER REFERENCES Objects(id),
             	b2a  INTEGER REFERENCES Objects(id),
             	UNIQUE (a, b),
-            	CHECK (a <= b)
+            	CHECK ((a <= b) AND NOT (a <= 4 AND b2a > 4))
         	);
         	INSERT INTO Edges (a, b, a2b, b2a)
-            VALUES (1, 2, 1, 1), (1, 3, 3, 3), (2,3,4,4)",
+            VALUES (1, 2, 2, 4),
+                   (1, 3, 3, 4),
+                   (2, 3, 4, 4),
+                   (1, 4, 1, 4)",
 		//_ 	   => "CREATE TABLE empty();"
 	}
 }

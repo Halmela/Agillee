@@ -14,14 +14,14 @@ impl CLI {
     }
 
     pub fn start(&mut self) -> Result<(), Error> {
-        self.objects.add_object(
-            Object::new(None,Some("test".to_string()),Some(Form::Tangible)),
-            1
-        );
+        //self.objects.add_object(
+        //    Object::new(None,Some("test".to_string()),Some(Form::Tangible)),
+        //    1
+        //);
         //help();
-        //self.objects.get_all_objects()?;
-        //self.objects.get_all_relations()?;
-        //self.main_loop()?;
+        self.objects.get_all_objects()?;
+        self.objects.get_all_relations()?;
+        self.main_loop()?;
         self.objects.drop()?;
         Ok(())
     }
@@ -46,34 +46,27 @@ impl CLI {
     }
 
     fn add_object(&mut self) -> Result<(), Error> {
-		println!("Give description for the object:");
-		let mut desc = String::new();
-        io::stdin()
-            .read_line(&mut desc)
-            .ok()
-            .expect("Failed to read line");
-
-		println!("Based on what? (t)angible or (i)ntangible?");
-		let mut q = String::new();
-        io::stdin()
-            .read_line(&mut q)
-            .ok()
-            .expect("Failed to read line");
-
+        if let (Some(desc), Some(form), Some(root)) = (ask_description(), ask_form(), ask_root()) {
+/*
         let obj = self.objects.add_objects(
             vec!(
                 Object {
                     id: None,
-                    description: Some(desc.trim().to_string()),
-                    form: None
+                    description: Some(desc),
+                    form: Some(form)
                 }
             ))?.pop().unwrap();
+            */
+            let (obj, f_edge, r_edge) = self.objects.add_object(
+                Object {
+                    id: None,
+                    description: Some(desc),
+                    form: Some(form)
+                }, root)?;
+            println!("{}\n{}\n{}", obj, f_edge, r_edge);
 
-		match q.trim() {
-    		"i" => {},
-    		"t" => {},
-    		_   => {}
-		}
+        }
+
         
         Ok(())
     }
@@ -105,6 +98,57 @@ impl CLI {
     }
     
 }
+
+fn ask_description() -> Option<String> {
+	println!("Give description for the object: (empty for abort)");
+	let mut desc = String::new();
+    io::stdin()
+        .read_line(&mut desc)
+        .ok()
+        .expect("Failed to read line");
+
+    match desc.trim() {
+        "" => None,
+        s => Some(s.to_string()),
+        _ => { println!("give valid answer"); ask_description() }
+    }
+}
+
+fn ask_root() -> Option<i32> {
+	println!("default (r)oot or custom id? (empty for abort)");
+	let mut root = String::new();
+    io::stdin()
+        .read_line(&mut root)
+        .ok()
+        .expect("Failed to read line");
+
+    match root.trim() {
+        "" => None,
+        "r" => Some(1),
+        s => match s.parse() {
+            Ok(x) => Some(x),
+            Err(_) =>{ println!("give valid answer"); ask_root() }
+        }
+    }
+}
+
+fn ask_form() -> Option<Form> {
+	println!("Based on what? (t)angible, (i)ntangible or (v)oid? empty for abort");
+	let mut q = String::new();
+    io::stdin()
+        .read_line(&mut q)
+        .ok()
+        .expect("Failed to read line");
+
+	match q.trim() {
+		"i" => Some(Form::Intangible),
+		"t" => Some(Form::Tangible),
+		"v" => Some(Form::Void),
+		""  => None,
+		_   => { println!("give valid answer"); ask_form() }
+	}
+}
+
 
 fn parse_relations(s: &str) -> Option<Vec<(i32, i32, Relation)>> {
     let v: Vec<&str> = s.split(&[' ','-'][..]).collect();

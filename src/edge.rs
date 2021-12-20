@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[derive(Clone)]
 pub struct Edge {
     pub a: Option<i32>,
     pub b: Option<i32>,

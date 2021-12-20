@@ -5,6 +5,7 @@ use std::collections::{HashMap};
 use itertools::Itertools;
 use crate::database::Database;
 use crate::object::Object;
+use crate::edge::*;
 
 
 pub struct Objects {
@@ -112,9 +113,8 @@ impl Objects {
     	Ok(ids)
 	}
 
-	pub fn add_object(&mut self, obj: Object, r: i32) -> Result<(), Error> {
-    	self.database.create_object(obj, r);
-    	Ok(())
+	pub fn add_object(&mut self, obj: Object, r: i32) -> Result<(Object, Edge, Edge), Error> {
+    	self.database.create_object(obj, r)
 	}
 
 	

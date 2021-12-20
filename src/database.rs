@@ -88,7 +88,7 @@ impl Database {
 		Ok(edge)
 	}
 
-    pub fn create_object(&mut self, o: Object, r: i32) -> Result<Object, Error> {
+    pub fn create_object(&mut self, o: Object, r: i32) -> Result<(Object, Edge, Edge), Error> {
         let mut transaction = self.client.transaction()?;
         let obj = Database::insert_object(o, transaction.transaction()?)?;
 
@@ -99,19 +99,21 @@ impl Database {
         };
 
         let f_edge = Database::insert_edge(f_edge, transaction.transaction()?)?;
-        println!("{}", f_edge);
 
-        let r_edge = Database::insert_edge(
-            Edge::new(Some(r), obj.id, Some(r), Some(4)),
-            transaction.transaction()?)?;
-        println!("{}", r_edge);
+		let r_edge = match obj.form {
+    		Some(Form::Tangible | Form::Intangible) =>
+        		Database::insert_edge(
+            		Edge::new(Some(r), obj.id, Some(r), Some(4)),
+                    transaction.transaction()?)?,
+    		_ => f_edge.clone()
+		};
 
         match (obj.id, f_edge.a, r_edge.a) {
             (Some(_), Some(_), Some(_)) => {println!("object addition was success"); transaction.commit()?},
             _ => {println!("object addition was failure");transaction.rollback()?}
         }
 
-		Ok(obj)
+		Ok((obj, f_edge, r_edge))
     }
 
     fn insert_object(o: Object, mut transaction: Transaction) -> Result<Object, Error> {
@@ -136,8 +138,12 @@ impl Database {
 		let mut edge =  Edge::new(None, None, None, None);
 
         if let (Some(a), Some(b), Some(a2b), Some(b2a)) = (e.a, e.b, e.a2b, e.b2a) {
-            let edge_row = transaction.query_one(edge_insert, &[&a, &b, &a2b, &b2a])?;
-            edge = Edge::new(edge_row.get("a"), edge_row.get("b"), edge_row.get("a2b"), edge_row.get("b2a"));
+            if a > 4 || b > 4 {
+                let edge_row = transaction.query_one(edge_insert, &[&a, &b, &a2b, &b2a])?;
+                edge = Edge::new(edge_row.get("a"), edge_row.get("b"), edge_row.get("a2b"), edge_row.get("b2a"));
+            } else {
+                println!("don't touch the core");
+            }
         }
         transaction.commit()?;
 		Ok(edge)
