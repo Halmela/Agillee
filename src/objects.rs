@@ -112,6 +112,11 @@ impl Objects {
     	Ok(ids)
 	}
 
+	pub fn add_object(&mut self, obj: Object, r: i32) -> Result<(), Error> {
+    	self.database.create_object(obj, r);
+    	Ok(())
+	}
+
 	
 	pub fn drop(&mut self) -> Result<(), Error> {
     	Ok(self.database.drop_tables()?)

@@ -14,10 +14,14 @@ impl CLI {
     }
 
     pub fn start(&mut self) -> Result<(), Error> {
-        help();
-        self.objects.get_all_objects()?;
-        self.objects.get_all_relations()?;
-        self.main_loop()?;
+        self.objects.add_object(
+            Object::new(None,Some("test".to_string()),Some(Form::Tangible)),
+            1
+        );
+        //help();
+        //self.objects.get_all_objects()?;
+        //self.objects.get_all_relations()?;
+        //self.main_loop()?;
         self.objects.drop()?;
         Ok(())
     }

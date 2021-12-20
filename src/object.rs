@@ -44,6 +44,7 @@ impl fmt::Display for Object {
 		let form = match &self.form {
     		Some(Form::Tangible) => "tangible",
     		Some(Form::Intangible) => "intangible",
+    		Some(Form::Void) => "void",
     		None => "formless"
 		};
     	
@@ -55,5 +56,6 @@ impl fmt::Display for Object {
 #[derive(Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub enum Form {
     Tangible,
-    Intangible
+    Intangible,
+    Void
 }

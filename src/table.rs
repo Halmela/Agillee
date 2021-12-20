@@ -4,7 +4,8 @@
 
 pub enum Table {
     Object,
-    Relation
+    Relation,
+    Edge
 }
 
 
@@ -21,7 +22,8 @@ pub fn table_to_scheme(table: &Table) -> &'static str {
             	id 	        SERIAL PRIMARY KEY,
             	description TEXT
         	);
-        	INSERT INTO Objects (description) VALUES ('Root'), ('Tangible'), ('Intangible')",
+        	INSERT INTO Objects (description)
+            	VALUES ('Root'), ('Tangible'), ('Intangible'), ('Void')",
 
         Table::Relation  =>
         	"CREATE TABLE Relations (
@@ -34,10 +36,21 @@ pub fn table_to_scheme(table: &Table) -> &'static str {
         	);
         	INSERT INTO Relations (a, b, a2b, b2a)
             VALUES (1, 2, TRUE, TRUE), (1, 3, TRUE, TRUE), (2,3,FALSE,FALSE)",
+
+
+        Table::Edge  =>
+        	"CREATE TABLE Edges (
+            	a    INTEGER REFERENCES Objects(id),
+            	b    INTEGER REFERENCES Objects(id),
+            	a2b  INTEGER REFERENCES Objects(id),
+            	b2a  INTEGER REFERENCES Objects(id),
+            	UNIQUE (a, b),
+            	CHECK (a <= b)
+        	);
+        	INSERT INTO Edges (a, b, a2b, b2a)
+            VALUES (1, 2, 1, 1), (1, 3, 3, 3), (2,3,4,4)",
 		//_ 	   => "CREATE TABLE empty();"
 	}
 }
 
 
-pub trait Tabble {
-}

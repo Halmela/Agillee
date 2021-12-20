@@ -3,6 +3,7 @@ use postgres::{Client, NoTls, Error, Transaction};
 use crate::table::*;
 use crate::object::*;
 use crate::objects::*;
+use crate::edge::*;
 use std::{thread, time};
 
 //use crate::object::*;
@@ -20,7 +21,7 @@ pub fn initialize_db() -> Result<Database, Error> {
         Ok(c) => {
             let mut db = Database {
                 client: c,
-                tables: vec!(Table::Object, Table::Relation) };
+                tables: vec!(Table::Object, Table::Relation, Table::Edge) };
             db.add_tables()?;
             Ok(db)},
         Err(_) => {
@@ -67,18 +68,71 @@ impl Database {
     }
 
 	/*
-     * Drop both tables from database
+     * Drop tables from database
      */
     pub fn drop_tables(&mut self) -> Result<(), Error> {
-        self.client.execute("DROP TABLE objects, relations", &[])?;
+        self.client.execute("DROP TABLE objects, relations, edges", &[])?;
         
         Ok(())
     }
 
-    pub fn insert_object(&mut self, object: Object) -> Result<Object, Error> {
 
+    pub fn create_object(&mut self, o: Object, r: i32) -> Result<Object, Error> {
+        let mut transaction = self.client.transaction()?;
+        let obj = Database::insert_object(o, transaction.transaction()?)?;
+        println!("obj: {}", obj);
+
+        let f_edge = match obj.form {
+            Some(Form::Tangible)   => Edge::new(Some(2),obj.id,Some(2),Some(4)),
+            Some(Form::Intangible) => Edge::new(Some(3),obj.id,Some(3),Some(4)),
+            _                      => Edge::new(Some(4),obj.id,Some(4),Some(4))
+        };
+
+        let f_edge = Database::insert_edge(f_edge, transaction.transaction()?)?;
+        println!("{}", f_edge);
+
+        let r_edge = Database::insert_edge(
+            Edge::new(Some(r), obj.id, Some(r), Some(4)),
+            transaction.transaction()?)?;
+        println!("{}", r_edge);
+
+        match (obj.id, f_edge.a, r_edge.a) {
+            (Some(_), Some(_), Some(_)) => {println!("success"); transaction.commit()?},
+            _ => {println!("failure");transaction.rollback()?}
+        }
+
+		Ok(obj)
+    }
+
+    fn insert_object(o: Object, mut transaction: Transaction) -> Result<Object, Error> {
+        let obj_insert = "INSERT INTO Objects (description)
+             					VALUES ($1)
+             					RETURNING id;";
+		let mut object = Object::new(None, None, None);
+        if let (Some(desc), Some(_)) = (o.description, &o.form) {
+            let o_id: i32 = transaction.query_one(obj_insert, &[&desc])?.get("id");
+            object = Object::new(Some(&o_id), Some(desc), o.form);
+        }
+		transaction.commit()?;
 		Ok(object)
     }
+
+    fn insert_edge(e: Edge, mut transaction: Transaction) -> Result<Edge, Error> {
+        let edge_insert = "INSERT INTO Edges ( a, b, a2b, b2a)
+            				VALUES           ($1,$2, $3,  $4)
+                			ON CONFLICT DO NOTHING
+                    		RETURNING a, b, a2b, b2a";
+
+		let mut edge =  Edge::new(None, None, None, None);
+
+        if let (Some(a), Some(b), Some(a2b), Some(b2a)) = (e.a, e.b, e.a2b, e.b2a) {
+            let edge_row = transaction.query_one(edge_insert, &[&a, &b, &a2b, &b2a])?;
+            edge = Edge::new(edge_row.get("a"), edge_row.get("b"), edge_row.get("a2b"), edge_row.get("b2a"));
+        }
+        transaction.commit()?;
+		Ok(edge)
+    }
+
 
 	/*
      * Insert objects to database.
