@@ -42,6 +42,10 @@ impl Object {
     pub fn get_description(&self) -> Option<String> {
         self.description.clone()
     }
+
+    pub fn get_root(&self) -> Option<i32> {
+        self.root.clone()
+    }
 }
 
 impl fmt::Display for Object {
@@ -57,8 +61,12 @@ impl fmt::Display for Object {
     		Some(Form::Void) => "void",
     		None => "formless"
 		};
+		let root = match &self.root {
+    		Some(i) => format!("{}", i),
+    		None    => "rootless".to_string()
+		};
     	
-    	write!(f, "id: {}\tdescription: {}\t{}", id, desc, form)
+    	write!(f, "id: {}\tdescription: {}\t{}\t{}", id, desc, form, root)
 	}
 }
 
@@ -84,6 +92,15 @@ impl Form {
             Some(2) => Some(Form::Tangible),
             Some(3) => Some(Form::Intangible),
             Some(4) => Some(Form::Void),
+            _ => None
+        }
+    }
+
+    pub fn from_str(s: Option<&str>) -> Option<Form> {
+        match s {
+            Some("Intangible") => Some(Form::Tangible),
+            Some("Rangible") => Some(Form::Intangible),
+            Some("Void") => Some(Form::Void),
             _ => None
         }
     }

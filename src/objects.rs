@@ -16,13 +16,11 @@ pub struct Objects {
 
 impl Objects {
     pub fn new(db: Database) -> Result<Objects, Error> {
-		let mut os = Objects {
+		Ok(Objects {
     		objects:   HashMap::new(),
     		relations: HashMap::new(),
     		database:  db
-		};
-		os.get_relations(&1, Relation::Any)?;
-		Ok(os)
+		})
     }
 
 /*
@@ -115,6 +113,11 @@ impl Objects {
 
 	pub fn add_object(&mut self, obj: Object) -> Result<Option<(Object, Edge)>, Error> {
     	self.database.create_object(obj)
+	}
+
+	pub fn temp_q(&mut self, obj: Object) -> Result<(), Error> {
+    	self.database.query_with_object(obj)?;
+    	Ok(())
 	}
 
 	

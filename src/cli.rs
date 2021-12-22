@@ -14,14 +14,19 @@ impl CLI {
     }
 
     pub fn start(&mut self) -> Result<(), Error> {
-        //self.objects.add_object(
-        //    Object::new(None,Some("test".to_string()),Some(Form::Tangible)),
-        //    1
-        //);
+        
+        let o = self.objects.add_object(
+            Object::new(None,Some("test".to_string()),Some(Form::Tangible),Some(5))
+        )?;
+        //println!("{}", o.unwrap().0);
+        let t_o = Object::new(None,None,None,None);
+        self.objects.temp_q(t_o)?;
+
         //help();
         //self.objects.get_all_objects()?;
         //self.objects.get_all_relations()?;
-        
+
+        /*
         match self.main_loop() {
 			Err(e) => {
     			println!("operation failed with error:\n{}", e);
@@ -29,8 +34,9 @@ impl CLI {
 			},
 			_ => println!("goodbye")
         }
+        */
         
-        self.objects.drop()?;
+        //self.objects.drop()?;
         Ok(())
     }
 

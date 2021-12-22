@@ -5,6 +5,7 @@ use crate::object::*;
 use crate::objects::*;
 use crate::edge::*;
 use std::{thread, time};
+use std::cmp::{min, max};
 
 //use crate::object::*;
 
@@ -281,6 +282,31 @@ impl Database {
     	}
 
         Ok(transaction.commit()?)
+	}
+
+	pub fn query_with_object(&mut self, object: Object) -> Result<Vec<Object>, Error> {
+    	let query: &'static str  = "
+        	SELECT O.id, O.description, F.form, COALESCE(NULLIF(E.a, O.id), E.b) as root
+            FROM Objects O JOIN Formations F ON O.id = F.object
+                           JOIN Edges E ON O.id = E.a OR O.id = E.b
+            WHERE   COALESCE($1 = O.id, TRUE)
+                AND COALESCE($2 LIKE O.description, TRUE)
+                AND COALESCE($3 = F.form, TRUE)
+				AND ((O.id = E.a AND (E.a2b = 4 AND E.b2a = E.b) AND COALESCE(E.b = $4, TRUE))
+    			  OR (O.id = E.b AND (E.b2a = 4 AND E.a2b = E.a) AND COALESCE(E.a = $4, TRUE)))
+            	";
+
+		for row in  self.client.query(query,
+        	&[&object.get_id(), &object.get_description(), &object.get_form_id(), &object.get_root()])? {
+        		let o = Object::new(
+            		Some(&row.get("id")),
+                	Some(row.get("description")),
+                    Form::from_id(Some(row.get("form"))),
+                    Some(row.get("root")));
+        		println!("{}", o);
+        	}
+
+		Ok(vec!())
 	}
 
 	/*
