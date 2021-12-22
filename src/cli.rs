@@ -55,22 +55,13 @@ impl CLI {
 
     fn add_object(&mut self) -> Result<(), Error> {
         if let (Some(desc), Some(form), Some(root)) = (ask_description(), ask_form(), ask_root()) {
-/*
-        let obj = self.objects.add_objects(
-            vec!(
-                Object {
-                    id: None,
-                    description: Some(desc),
-                    form: Some(form)
-                }
-            ))?.pop().unwrap();
-            */
             if let Some((obj, r_edge)) = self.objects.add_object(
                 Object {
                     id: None,
                     description: Some(desc),
-                    form: Some(form)
-                }, Some(root))? {
+                    form: Some(form),
+                    root: Some(root)
+                })? {
             println!("{}\n{}", obj, r_edge);}
 
         }

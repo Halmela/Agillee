@@ -97,12 +97,12 @@ impl Database {
 
 	}
 
-    pub fn create_object(&mut self, object: Object, root: Option<i32>) -> Result<Option<(Object, Edge)>, Error> {
+    pub fn create_object(&mut self, object: Object) -> Result<Option<(Object, Edge)>, Error> {
         let mut tra = self.client.transaction()?;
 
 		let obj  = Database::insert_object(object, tra.transaction()?)?;
         let obj  = Database::upsert_form(obj, tra.transaction()?)?;
-        let edge = Database::insert_root(&obj, root, tra.transaction()?)?;
+        let edge = Database::insert_root(&obj, tra.transaction()?)?;
 
 		if let (Some(o), Some(e)) = (obj, edge) {
     		println!("object addition was succesful");
@@ -138,7 +138,7 @@ impl Database {
 		let mut object = None;
         if let (Some(desc), Some(_)) = (o.description, &o.form) {
             let o_id: i32 = transaction.query_one(obj_insert, &[&desc])?.get("id");
-            object = Some(Object::new(Some(&o_id), Some(desc), o.form));
+            object = Some(Object::new(Some(&o_id), Some(desc), o.form, o.root));
         }
 
         if object.is_some() {
@@ -180,8 +180,8 @@ impl Database {
     }
 
 
-    fn insert_root(obj: &Option<Object>, root: Option<i32>, transaction: Transaction) -> Result<Option<Edge>, Error> {
-    	if let Some(e) = Edge::root(obj.as_ref().map_or(None, |o| o.get_id()), root) {
+    fn insert_root(obj: &Option<Object>, transaction: Transaction) -> Result<Option<Edge>, Error> {
+    	if let Some(e) = Edge::root(obj) {
             Database::insert_edge(e, transaction)
     	} else {
         	Ok(None)
@@ -208,7 +208,8 @@ impl Database {
                 	os.push( Object {
                     			id: obj.get("id"),
                     			description: obj.get("description"),
-                				form: None	});
+                				form: None,
+                				root: None});
             	}
         	};
     	}
@@ -295,7 +296,8 @@ impl Database {
     		objects.push(Object {
     			id: obj.get("id"),
     			description: obj.get("description"),
-    			form: None
+    			form: None,
+    			root: None
     		});
 		}
 		transaction.commit()?;
@@ -308,7 +310,8 @@ impl Database {
     		objects.push(Object {
     			id: row.get("id"),
     			description: row.get("description"),
-    			form: None
+    			form: None,
+    			root: None
     		});
 		}
 		Ok(objects)

@@ -113,8 +113,8 @@ impl Objects {
     	Ok(ids)
 	}
 
-	pub fn add_object(&mut self, obj: Object, root: Option<i32>) -> Result<Option<(Object, Edge)>, Error> {
-    	self.database.create_object(obj, root)
+	pub fn add_object(&mut self, obj: Object) -> Result<Option<(Object, Edge)>, Error> {
+    	self.database.create_object(obj)
 	}
 
 	

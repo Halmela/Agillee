@@ -5,7 +5,8 @@ use std::hash::{Hash, Hasher};
 pub struct Object {
     pub id: Option<i32>,
     pub description: Option<String>,
-    pub form: Option<Form>
+    pub form: Option<Form>,
+    pub root: Option<i32>
 }
 
 impl Hash for Object {
@@ -16,21 +17,14 @@ impl Hash for Object {
 
 
 impl Object {
-    pub fn new(id: Option<&i32>, desc: Option<String>, form: Option<Form>) -> Object {
-		match id {
-    		Some(id) =>
-        		Object {
-            		id: Some(*id),
-            		description: desc,
-            		form: form
-        		},
-        	None     =>
-        		Object {
-            		id: None,
-            		description: desc,
-            		form: form
-        		}
-		}
+    pub fn new(id: Option<&i32>, desc: Option<String>, form: Option<Form>, root: Option<i32>) -> Object {
+        Object {
+            id: id.map(|i| *i),
+    		description: desc,
+    		form: form,
+    		root: root
+
+        }
     }
 
     pub fn get_id(&self) -> Option<i32> {

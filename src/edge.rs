@@ -1,10 +1,10 @@
 use std::fmt;
-use crate::object::Form;
+use crate::object::*;
 
 #[derive(Clone)]
 pub struct Edge {
-    pub a: Option<i32>,
-    pub b: Option<i32>,
+    pub a:   Option<i32>,
+    pub b:   Option<i32>,
     pub a2b: Option<i32>,
     pub b2a: Option<i32>,
 }
@@ -19,9 +19,13 @@ impl Edge {
     	}
 	}
 
-	pub fn root(root: Option<i32>, object: Option<i32>) -> Option<Edge> {
-    	if let Some(r) = root {
-        	Some(Edge::new(Some(r), object, Some(r), Some(Form::Void.to_id())))
+	pub fn root(object: &Option<Object>) -> Option<Edge> {
+    	if let Some((Some(r), Some(o))) = object.as_ref().map(|o| (o.root, o.id)) {
+        	Some(Edge::new(
+            	Some(r),
+                Some(o),
+                Some(r),
+                Some(Form::Void.to_id())))
     	} else { None }
 	}
 }
