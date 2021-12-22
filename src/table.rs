@@ -46,7 +46,10 @@ pub fn table_to_scheme(table: &Table) -> &'static str {
             	b    INTEGER REFERENCES Objects(id),
             	a2b  INTEGER REFERENCES Objects(id),
             	b2a  INTEGER REFERENCES Objects(id)
-        	);",
+        	);
+        	INSERT INTO Edges (a,b,a2b,b2a) 
+            VALUES (1, 1, 1, 4)
+            ;",
         Table::Forms =>
             "CREATE TABLE Forms (
                 id   SERIAL PRIMARY KEY,
