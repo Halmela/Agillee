@@ -1,32 +1,37 @@
 use crate::object::*;
 use crate::objects::*;
+use crate::commander::*;
 use std::io;
 use postgres::{Error};
 use itertools::Itertools;
 
+
 pub struct CLI {
-    objects: Objects
+    commander: Commander
 }
 
 impl CLI {
-    pub fn new(objects: Objects) -> CLI {
-        CLI {objects}
+    pub fn new(commander: Commander) -> CLI {
+        CLI {commander}
     }
 
     pub fn start(&mut self) -> Result<(), Error> {
-        
+
+        /*
         let o = self.objects.add_object(
-            Object::new(None,Some("test".to_string()),Some(Form::Tangible),Some(5))
+            Object::new(None,Some("test".to_string()),Some(Form::Tangible),Some(1))
         )?;
+        
         //println!("{}", o.unwrap().0);
         let t_o = Object::new(None,None,None,None);
         self.objects.temp_q(t_o)?;
+        */
 
         //help();
         //self.objects.get_all_objects()?;
         //self.objects.get_all_relations()?;
 
-        /*
+        
         match self.main_loop() {
 			Err(e) => {
     			println!("operation failed with error:\n{}", e);
@@ -34,7 +39,7 @@ impl CLI {
 			},
 			_ => println!("goodbye")
         }
-        */
+        
         
         //self.objects.drop()?;
         Ok(())
@@ -50,8 +55,9 @@ impl CLI {
 
 			match cmd.trim() {
     			"ao" => self.add_object()?,
-    			"ar" => self.add_relation()?,
-        		"p" => println!("{}", self.objects),
+    			"q" => self.query_object()?,
+    			//"ar" => self.add_relation()?,
+        		//"p" => println!("{}", self.objects),
         		"h" => help(),
         		"x" => { return Ok(()) },
     			x => { println!("{} is not a valid command",x); }
@@ -59,17 +65,25 @@ impl CLI {
         }
     }
 
+    fn query_object(&mut self) -> Result<(), Error> {
+        let st = self.commander.execute(
+            Command::ReadObject(
+                Object::new(None, None, None, None)))?;
+        println!("{}", st);
+        Ok(())
+    }
+
     fn add_object(&mut self) -> Result<(), Error> {
         if let (Some(desc), Some(form), Some(root)) = (ask_description(), ask_form(), ask_root()) {
-            if let Some((obj, r_edge)) = self.objects.add_object(
-                Object {
-                    id: None,
-                    description: Some(desc),
-                    form: Some(form),
-                    root: Some(root)
-                })? {
-            println!("{}\n{}", obj, r_edge);}
-
+            let st =self.commander
+                .execute(Command::CreateObject(
+                    Object {
+                        id: None,
+                        description: Some(desc),
+                        form: Some(form),
+                        root: Some(root)
+                }))?;
+            println!("{}",st);
         }
 
         
@@ -77,6 +91,7 @@ impl CLI {
     }
 
 
+/*
     fn add_relation(&mut self) -> Result<(), Error> {
 		println!("Describe relation, empty for return (h for help):");
 		let mut desc = String::new();
@@ -101,6 +116,7 @@ impl CLI {
         
 		Ok(())
     }
+    */
     
 }
 

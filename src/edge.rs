@@ -1,13 +1,25 @@
 use std::fmt;
 use crate::object::*;
+use std::hash::{Hash, Hasher};
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, PartialOrd, Ord, Default)]
 pub struct Edge {
     pub a:   Option<i32>,
     pub b:   Option<i32>,
     pub a2b: Option<i32>,
     pub b2a: Option<i32>,
 }
+
+
+impl Hash for Edge {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.a.hash(state);
+        self.b.hash(state);
+        self.a2b.hash(state);
+        self.a2b.hash(state);
+    }
+}
+
 
 impl Edge {
 	pub fn new(a: Option<i32>,b: Option<i32>,a2b: Option<i32>,b2a: Option<i32>) -> Edge {

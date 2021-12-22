@@ -298,17 +298,21 @@ impl Database {
         			, TRUE)
             	";
 
-		for row in  self.client.query(query,
-        	&[&object.get_id(), &object.get_description(), &object.get_form_id(), &object.get_root()])? {
-        		let o = Object::new(
-            		row.try_get("id").ok().as_ref(),
-                	row.try_get("description").ok(),
-                    Form::from_id(row.try_get("form").ok()),
-                    row.try_get("root").ok());
-        		println!("{}", o);
-        	}
-
-		Ok(vec!())
+		Ok(
+    		self.client.query(query, &[ &object.get_id(),
+                                		&object.get_description(),
+                                		&object.get_form_id(),
+                                		&object.get_root()])?
+                        .iter()
+                        .map(|row|
+                    		Object::new(
+                    		row.try_get("id").ok().as_ref(),
+                        	row.try_get("description").ok(),
+                            Form::from_id(row.try_get("form").ok()),
+                            row.try_get("root").ok()))
+                        .collect()
+		)
+        	
 	}
 
 	/*

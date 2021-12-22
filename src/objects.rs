@@ -116,7 +116,9 @@ impl Objects {
 	}
 
 	pub fn temp_q(&mut self, obj: Object) -> Result<(), Error> {
-    	self.database.query_with_object(obj)?;
+    	for o in self.database.query_with_object(obj)? {
+        	println!("{}", o);
+    	}
     	Ok(())
 	}
 
