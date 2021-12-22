@@ -3,9 +3,11 @@
  */
 
 pub enum Table {
-    Object,
-    Relation,
-    Edge
+    Objects,
+    Relations,
+    Edges,
+    Forms,
+    Formations
 }
 
 
@@ -17,15 +19,15 @@ pub enum Table {
 pub fn table_to_scheme(table: &Table) -> &'static str {
 	match table {
     	// Objects contain at least root, tangible and intangible objects
-    	Table::Object =>
+    	Table::Objects =>
             "CREATE TABLE Objects (
             	id 	        SERIAL PRIMARY KEY,
             	description TEXT
         	);
         	INSERT INTO Objects (description)
-            	VALUES ('Root'), ('Tangible'), ('Intangible'), ('Void')",
-
-        Table::Relation  =>
+            	VALUES ('Root'), ('Tangible'), ('Intangible'), ('Void')
+        	",
+        Table::Relations  =>
         	"CREATE TABLE Relations (
             	a    INTEGER REFERENCES Objects(id),
             	b    INTEGER REFERENCES Objects(id),
@@ -35,23 +37,33 @@ pub fn table_to_scheme(table: &Table) -> &'static str {
             	CHECK (a <= b)
         	);
         	INSERT INTO Relations (a, b, a2b, b2a)
-            VALUES (1, 2, TRUE, TRUE), (1, 3, TRUE, TRUE), (2,3,FALSE,FALSE)",
-
-
-        Table::Edge  =>
+            VALUES (1, 2, TRUE, TRUE), (1, 3, TRUE, TRUE), (2,3,FALSE,FALSE)
+            ",
+        Table::Edges  =>
         	"CREATE TABLE Edges (
+            	id   SERIAL PRIMARY KEY,
             	a    INTEGER REFERENCES Objects(id),
             	b    INTEGER REFERENCES Objects(id),
             	a2b  INTEGER REFERENCES Objects(id),
-            	b2a  INTEGER REFERENCES Objects(id),
-            	UNIQUE (a, b),
-            	CHECK ((a <= b) AND NOT (a <= 4 AND b2a > 4))
-        	);
-        	INSERT INTO Edges (a, b, a2b, b2a)
-            VALUES (1, 2, 2, 4),
-                   (1, 3, 3, 4),
-                   (2, 3, 4, 4),
-                   (1, 4, 1, 4)",
+            	b2a  INTEGER REFERENCES Objects(id)
+        	);",
+        Table::Forms =>
+            "CREATE TABLE Forms (
+                id   SERIAL PRIMARY KEY,
+                form TEXT
+            );
+            INSERT INTO Forms (form)
+            VALUES ('Root'), ('Tangible'), ('Intangible'), ('Void')
+            ;",
+        Table::Formations =>
+            "CREATE TABLE Formations (
+                object INTEGER REFERENCES Objects(id) ON DELETE CASCADE,
+                form   INTEGER REFERENCES Forms(id),
+                UNIQUE (object)
+            );
+            INSERT INTO Formations (object, form)
+            VALUES (1,1), (2,2), (3,3), (4,4)
+            ;",
 		//_ 	   => "CREATE TABLE empty();"
 	}
 }

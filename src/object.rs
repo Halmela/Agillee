@@ -32,6 +32,22 @@ impl Object {
         		}
 		}
     }
+
+    pub fn get_id(&self) -> Option<i32> {
+        self.id
+    }
+
+    pub fn get_form(&self) -> Option<Form> {
+        self.form.clone()
+    }
+
+    pub fn get_form_id(&self) -> Option<i32> {
+        self.form.clone().map(|x| x.to_id())
+    }
+
+    pub fn get_description(&self) -> Option<String> {
+        self.description.clone()
+    }
 }
 
 impl fmt::Display for Object {
@@ -58,4 +74,23 @@ pub enum Form {
     Tangible,
     Intangible,
     Void
+}
+
+impl Form {
+    pub fn to_id(&self) -> i32 {
+        match self {
+            Form::Tangible   => 2,
+            Form::Intangible => 3,
+            Form::Void       => 4,
+        }
+    }
+
+    pub fn from_id(id: Option<i32>) -> Option<Form> {
+        match id {
+            Some(2) => Some(Form::Tangible),
+            Some(3) => Some(Form::Intangible),
+            Some(4) => Some(Form::Void),
+            _ => None
+        }
+    }
 }

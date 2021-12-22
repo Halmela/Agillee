@@ -19,9 +19,17 @@ impl CLI {
         //    1
         //);
         //help();
-        self.objects.get_all_objects()?;
-        self.objects.get_all_relations()?;
-        self.main_loop()?;
+        //self.objects.get_all_objects()?;
+        //self.objects.get_all_relations()?;
+        
+        match self.main_loop() {
+			Err(e) => {
+    			println!("operation failed with error:\n{}", e);
+    			self.main_loop()?
+			},
+			_ => println!("goodbye")
+        }
+        
         self.objects.drop()?;
         Ok(())
     }
@@ -57,13 +65,13 @@ impl CLI {
                 }
             ))?.pop().unwrap();
             */
-            let (obj, f_edge, r_edge) = self.objects.add_object(
+            if let Some((obj, r_edge)) = self.objects.add_object(
                 Object {
                     id: None,
                     description: Some(desc),
                     form: Some(form)
-                }, root)?;
-            println!("{}\n{}\n{}", obj, f_edge, r_edge);
+                }, Some(root))? {
+            println!("{}\n{}", obj, r_edge);}
 
         }
 
@@ -110,7 +118,6 @@ fn ask_description() -> Option<String> {
     match desc.trim() {
         "" => None,
         s => Some(s.to_string()),
-        _ => { println!("give valid answer"); ask_description() }
     }
 }
 

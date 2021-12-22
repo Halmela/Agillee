@@ -21,7 +21,13 @@ pub fn initialize_db() -> Result<Database, Error> {
         Ok(c) => {
             let mut db = Database {
                 client: c,
-                tables: vec!(Table::Object, Table::Relation, Table::Edge) };
+                tables: vec!(
+                    Table::Objects,
+                    Table::Relations,
+                    Table::Edges,
+                    Table::Forms,
+                    Table::Formations
+                    ) };
             db.add_tables()?;
             Ok(db)},
         Err(_) => {
@@ -71,82 +77,115 @@ impl Database {
      * Drop tables from database
      */
     pub fn drop_tables(&mut self) -> Result<(), Error> {
-        self.client.execute("DROP TABLE objects, relations, edges", &[])?;
+        self.client.execute("DROP TABLE objects, relations, edges, forms, formations", &[])?;
         
         Ok(())
     }
 
-	pub fn create_edge(&mut self, e: Edge) -> Result<Edge, Error> {
+	pub fn create_edge(&mut self, e: Edge) -> Result<Option<Edge>, Error> {
     	let mut transaction = self.client.transaction()?;
-    	let edge = Database::insert_edge(e, transaction.transaction()?)?;
 
-    	match edge.a {
-        	Some(_) => {println!("edge addition was success"); transaction.commit()?},
-        	_       => {println!("edge addition was failure"); transaction.rollback()?}
+    	let edge = Database::insert_edge(e, transaction.transaction()?)?;
+    	if edge.is_some() {
+        	println!("edge addition was success");
+            transaction.commit()?;
+            Ok(edge)
+    	} else {
+        	println!("edge addition was failure");
+            Ok(None)
     	}
 
-		Ok(edge)
 	}
 
-    pub fn create_object(&mut self, o: Object, r: i32) -> Result<(Object, Edge, Edge), Error> {
-        let mut transaction = self.client.transaction()?;
-        let obj = Database::insert_object(o, transaction.transaction()?)?;
+    pub fn create_object(&mut self, object: Object, root: Option<i32>) -> Result<Option<(Object, Edge)>, Error> {
+        let mut tra = self.client.transaction()?;
 
-        let f_edge = match obj.form {
-            Some(Form::Tangible)   => Edge::new(Some(2),obj.id,Some(2),Some(4)),
-            Some(Form::Intangible) => Edge::new(Some(3),obj.id,Some(3),Some(4)),
-            _                      => Edge::new(Some(4),obj.id,Some(4),Some(4))
-        };
+		let obj  = Database::insert_object(object, tra.transaction()?)?;
+        let obj  = Database::upsert_form(obj, tra.transaction()?)?;
+        let edge = Database::insert_root(&obj, root, tra.transaction()?)?;
 
-        let f_edge = Database::insert_edge(f_edge, transaction.transaction()?)?;
-
-		let r_edge = match obj.form {
-    		Some(Form::Tangible | Form::Intangible) =>
-        		Database::insert_edge(
-            		Edge::new(Some(r), obj.id, Some(r), Some(4)),
-                    transaction.transaction()?)?,
-    		_ => f_edge.clone()
-		};
-
-        match (obj.id, f_edge.a, r_edge.a) {
-            (Some(_), Some(_), Some(_)) => {println!("object addition was success"); transaction.commit()?},
-            _ => {println!("object addition was failure");transaction.rollback()?}
-        }
-
-		Ok((obj, f_edge, r_edge))
+		if let (Some(o), Some(e)) = (obj, edge) {
+    		println!("object addition was succesful");
+    		tra.commit()?;
+    		Ok(Some((o, e)))
+		} else {
+    		println!("object addition failed");
+            Ok(None)
+		}
     }
 
-    fn insert_object(o: Object, mut transaction: Transaction) -> Result<Object, Error> {
+    
+
+    fn upsert_form(object: Option<Object>, mut transaction: Transaction) -> Result<Option<Object>, Error> {
+        let form_upsert = "INSERT INTO Formations (object, form)
+        				   VALUES ($1, $2)
+            			   ON CONFLICT (object) DO UPDATE
+                			   SET object = EXCLUDED.object,
+                			       form   = EXCLUDED.form
+                			";
+        if let Some(o) = object {
+            match transaction.execute(form_upsert, &[&o.get_id(), &o.get_form_id()])? {
+                1 => { println!("form updated");       transaction.commit()?; Ok(Some(o))   }
+                _ => { println!("form update failed");  Ok(None)}
+            }
+        } else { println!("form update failed");  Ok(None)}
+    }
+
+    fn insert_object(o: Object, mut transaction: Transaction) -> Result<Option<Object>, Error> {
         let obj_insert = "INSERT INTO Objects (description)
              					VALUES ($1)
              					RETURNING id;";
-		let mut object = Object::new(None, None, None);
+		let mut object = None;
         if let (Some(desc), Some(_)) = (o.description, &o.form) {
             let o_id: i32 = transaction.query_one(obj_insert, &[&desc])?.get("id");
-            object = Object::new(Some(&o_id), Some(desc), o.form);
+            object = Some(Object::new(Some(&o_id), Some(desc), o.form));
         }
-		transaction.commit()?;
+
+        if object.is_some() {
+            println!("object added");
+    		transaction.commit()?;
+        } else {
+            println!("object addition failed");
+        }
+
 		Ok(object)
     }
 
-    fn insert_edge(e: Edge, mut transaction: Transaction) -> Result<Edge, Error> {
+
+    fn insert_edge(e: Edge, mut transaction: Transaction) -> Result<Option<Edge>, Error> {
         let edge_insert = "INSERT INTO Edges ( a, b, a2b, b2a)
             				VALUES           ($1,$2, $3,  $4)
                 			ON CONFLICT DO NOTHING
                     		RETURNING a, b, a2b, b2a";
 
-		let mut edge =  Edge::new(None, None, None, None);
+		let mut edge = None;
 
         if let (Some(a), Some(b), Some(a2b), Some(b2a)) = (e.a, e.b, e.a2b, e.b2a) {
             if a > 4 || b > 4 {
                 let edge_row = transaction.query_one(edge_insert, &[&a, &b, &a2b, &b2a])?;
-                edge = Edge::new(edge_row.get("a"), edge_row.get("b"), edge_row.get("a2b"), edge_row.get("b2a"));
+                edge = Some(Edge::new(edge_row.get("a"), edge_row.get("b"), edge_row.get("a2b"), edge_row.get("b2a")));
             } else {
                 println!("don't touch the core");
             }
         }
-        transaction.commit()?;
+
+        if edge.is_some() {
+            println!("edge added");
+            transaction.commit()?;
+        } else {
+            println!("edge addition failed");
+        }
+
 		Ok(edge)
+    }
+
+
+    fn insert_root(obj: &Option<Object>, root: Option<i32>, transaction: Transaction) -> Result<Option<Edge>, Error> {
+    	if let Some(e) = Edge::root(obj.as_ref().map_or(None, |o| o.get_id()), root) {
+            Database::insert_edge(e, transaction)
+    	} else {
+        	Ok(None)
+    	}
     }
 
 
