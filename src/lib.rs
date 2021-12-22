@@ -1,3 +1,7 @@
+#[doc(inline)]
+pub use std;
+
+
 pub mod object;
 pub mod objects;
 pub mod table;
