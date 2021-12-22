@@ -5,7 +5,6 @@ use crate::object::*;
 use crate::objects::*;
 use crate::edge::*;
 use std::{thread, time};
-use std::cmp::{min, max};
 
 //use crate::object::*;
 
@@ -306,10 +305,10 @@ impl Database {
                         .iter()
                         .map(|row|
                     		Object::new(
-                    		row.try_get("id").ok().as_ref(),
-                        	row.try_get("description").ok(),
-                            Form::from_id(row.try_get("form").ok()),
-                            row.try_get("root").ok()))
+                        		row.try_get("id").ok().as_ref(),
+                            	row.try_get("description").ok(),
+                                Form::from_id(row.try_get("form").ok()),
+                                row.try_get("root").ok()))
                         .collect()
 		)
         	
