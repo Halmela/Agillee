@@ -20,14 +20,7 @@ pub fn initialize_db() -> Result<Database, Error> {
                 NoTls) {
         Ok(c) => {
             let mut db = Database {
-                client: c,
-                tables: vec!(
-                    Table::Objects,
-                    Table::Relations,
-                    Table::Edges,
-                    Table::Forms,
-                    Table::Formations
-                    ) };
+                client: c };
             db.add_tables()?;
             Ok(db)},
         Err(_) => {
@@ -41,7 +34,6 @@ pub fn initialize_db() -> Result<Database, Error> {
 
 pub struct Database {
     //schema: Object,
-    tables: Vec<Table>,
     pub client: Client
 }
 
@@ -50,10 +42,9 @@ impl Database {
      * Add tables to database.
      */
     fn add_tables(&mut self) -> Result<(), Error> {
-    	for table in &self.tables {
+    	for scheme in Table::all_schemes() {
         	let transaction = self.client.transaction()?;
-        	Database::add_scheme(table_to_scheme(table), transaction)?;
-            
+        	Database::add_scheme(scheme, transaction)?;
     	}
     	Ok(())
     }

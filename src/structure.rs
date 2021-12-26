@@ -19,7 +19,15 @@ impl Objects_n {
 
         Objects_n {objects: hs}
     }
+
+    pub fn merge(self, other: Objects_n) -> Objects_n {
+		Objects_n::from_vec(
+        		self.objects.union(&other.objects)
+            	.map(|o| o.clone())
+            	.collect())
+    }
 }
+
 
 impl fmt::Display for Objects_n {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -51,6 +59,13 @@ impl Edges {
         }
 
         Edges { edges: hs }
+    }
+
+    pub fn merge(self, other: Edges) -> Edges {
+		Edges::from_vec(
+        		self.edges.union(&other.edges)
+            	.map(|e| e.clone())
+            	.collect())
     }
 }
 
@@ -93,5 +108,13 @@ impl Structure {
 			edges:   Edges::from_vec(es.unwrap_or_default())
         }
     }
+
+    pub fn merge(self, other: Structure) -> Structure {
+        Structure {
+            objects: self.objects.merge(other.objects),
+            edges: self.edges.merge(other.edges)
+        }
+    }
+
 }
 
