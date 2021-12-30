@@ -40,6 +40,22 @@ impl Edge {
                 Some(Form::Void.to_id())))
     	} else { None }
 	}
+
+	pub fn get_a(&self) -> Option<i32> {
+    	self.a
+	}
+   	
+	pub fn get_b(&self) -> Option<i32> {
+    	self.b
+	}
+
+	pub fn get_a2b(&self) -> Option<i32> {
+    	self.a2b
+	}
+
+	pub fn get_b2a(&self) -> Option<i32> {
+    	self.b2a
+	}
 }
 
 

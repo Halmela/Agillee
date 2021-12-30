@@ -1,6 +1,8 @@
 use crate::database::*;
 use crate::object::*;
+use crate::objects::*;
 use crate::edge::*;
+use crate::edges::*;
 use crate::structure::*;
 use postgres::Error;
 
@@ -16,8 +18,10 @@ impl Commander {
 
     pub fn execute(&mut self, c: Command) -> Result<Structure, Error> {
         match c {
+            Command::Read(s) =>
+                self.read(s),
             Command::ReadObject(o) =>
-                self.db.query_with_object(o)
+                self.db.query_with_object(&o)
                     .map(|v| Structure::new(Some(v), None)),
             Command::CreateObject(o) =>
                 self.db.create_object(o)
@@ -30,6 +34,43 @@ impl Commander {
             _ => Ok(Structure::new(None, None))
         }
     }
+
+    fn read(&mut self, s: Structure) -> Result<Structure, Error> {
+        let mut os = vec!();
+        for o in s.get_objects() {
+			os.push(
+    			Objects::from_vec(
+        			self.db.query_with_object(&o)?
+    			));
+        }
+
+        let mut es = vec!();
+        
+        for e in s.get_edges() {
+            es.push(
+                Edges::from_vec(
+                    self.db.query_with_edge(&e)?
+                ));
+        }
+        println!("{}, {}", os.len(), es.len());
+
+        
+        let es = es.iter()
+            .fold(
+                Edges::empty(),
+                |acc, e| acc.merge(e)
+            );
+
+        let os = os.iter()
+            .fold(
+                Objects::empty(),
+                |acc, o| acc.merge(o)
+            );
+
+        Ok(
+            Structure::from_structs(os, es)
+        )
+    }
 }
 
 
@@ -37,5 +78,6 @@ pub enum Command {
     CreateObject(Object),
     //Update,
     //Delete,
-    ReadObject(Object)
+    ReadObject(Object),
+    Read(Structure)
 }

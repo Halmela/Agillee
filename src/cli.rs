@@ -1,6 +1,7 @@
 use crate::object::*;
-use crate::objects::*;
+use crate::edge::*;
 use crate::commander::*;
+use crate::structure::*;
 use std::io;
 use postgres::{Error};
 use itertools::Itertools;
@@ -39,6 +40,7 @@ impl CLI {
 			},
 			_ => println!("goodbye")
         }
+
         
         
         //self.objects.drop()?;
@@ -55,7 +57,7 @@ impl CLI {
 
 			match cmd.trim() {
     			"ao" => self.add_object()?,
-    			"q" => self.query_object()?,
+    			"q" => self.query()?,
     			//"ar" => self.add_relation()?,
         		//"p" => println!("{}", self.objects),
         		"h" => help(),
@@ -63,6 +65,18 @@ impl CLI {
     			x => { println!("{} is not a valid command",x); }
 			}
         }
+    }
+
+    fn query(&mut self) -> Result<(), Error> {
+        let st = self.commander.execute(
+            Command::Read(
+                Structure::new(
+                    Some(vec!(Object::new(None, None, None, None))),
+                	Some(vec!(Edge::new(None, None, None, None))))
+            )
+        )?;
+        println!("{}", st);
+        Ok(())
     }
 
     fn query_object(&mut self) -> Result<(), Error> {
@@ -89,35 +103,6 @@ impl CLI {
         
         Ok(())
     }
-
-
-/*
-    fn add_relation(&mut self) -> Result<(), Error> {
-		println!("Describe relation, empty for return (h for help):");
-		let mut desc = String::new();
-        io::stdin()
-            .read_line(&mut desc)
-            .ok()
-            .expect("Failed to read line");
-
-        match desc.trim() {
-            "h" => { relation_help(); self.add_relation()?; },
-            ""  => {}
-             x  => {
-                match parse_relations(x) {
-                    Some(v) => for (a,b,r) in v {
-                        println!("{},{},{:?}",a,b,r);
-                        self.objects.add_relation(a,b,r)?
-                    },
-					None => {println!("Couldn't read, try again"); self.add_relation()?; }
-                }
-            }
-        };
-        
-		Ok(())
-    }
-    */
-    
 }
 
 fn ask_description() -> Option<String> {
@@ -170,6 +155,7 @@ fn ask_form() -> Option<Form> {
 }
 
 
+/*
 fn parse_relations(s: &str) -> Option<Vec<(i32, i32, Relation)>> {
     let v: Vec<&str> = s.split(&[' ','-'][..]).collect();
     if let Some((a,r,b)) = v.iter().collect_tuple() {
@@ -207,6 +193,7 @@ fn parse_relations(s: &str) -> Option<Vec<(i32, i32, Relation)>> {
         None
     }
 }
+*/
 
 fn help() {
     let help: &'static str = "Available commands:\n\
@@ -242,6 +229,8 @@ fn relation_help() {
             this will overwrite any previous relation";
     println!("{}", help);
 }
+
 /*
     	\t\t \n\
 */
+
