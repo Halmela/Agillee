@@ -3,6 +3,7 @@ use std::collections::{HashSet};
 use std::fmt;
 use std::fmt::Write;
 use itertools::Itertools;
+use std::convert::From;
 
 
 pub struct Edges {
@@ -25,6 +26,12 @@ impl Edges {
         }
     }
 
+    pub fn blank() -> Edges {
+        Edges {
+            edges: [Edge::blank()].iter().cloned().collect()
+        }
+    }
+
     pub fn merge(self, other: &Edges) -> Edges {
 		Edges::from_vec(
         		self.edges.union(&other.edges)
@@ -35,6 +42,13 @@ impl Edges {
     pub fn get_edges(&self) -> Vec<Edge> {
         self.edges.iter().map(|o| o.clone()).collect()
     }
+}
+
+impl From<Edge> for Edges {
+    fn from(item: Edge) -> Self {
+        Edges { edges: [item].iter().cloned().collect() }
+    }
+
 }
 
 impl fmt::Display for Edges {

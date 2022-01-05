@@ -4,6 +4,7 @@ use std::collections::{HashSet};
 use std::fmt;
 use std::fmt::Write;
 use itertools::Itertools;
+use std::convert::From;
 
 
 pub struct Objects {
@@ -13,6 +14,12 @@ pub struct Objects {
 impl Objects {
     pub fn empty() -> Objects {
         Objects { objects: HashSet::new() }
+    }
+
+    pub fn blank() -> Objects {
+		Objects {
+    		objects: [Object::blank()].iter().cloned().collect()
+		}
     }
 
     pub fn from_vec(v: Vec<Object>) -> Objects {
@@ -36,6 +43,11 @@ impl Objects {
     }
 }
 
+impl From<Object> for Objects {
+    fn from(item: Object) -> Self {
+        Objects { objects: [item].iter().cloned().collect() }
+    }
+}
 
 impl fmt::Display for Objects {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

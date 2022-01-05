@@ -8,5 +8,12 @@ edition = "2018"
 
 [dependencies]
 rand = "0.7"
-postgres = "0.18"
+postgres = "0.19"
 itertools = "0.10"
+rocket = "0.5.0-rc.1"
+tokio = "1.15"
+
+[dependencies.rocket_sync_db_pools]
+version = "0.1.0-rc.1"
+default-features = false
+features = ["postgres_pool"]

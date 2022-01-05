@@ -5,12 +5,30 @@ use crate::edges::*;
 use std::fmt;
 use std::fmt::Write;
 use itertools::Itertools;
-
+use std::convert::From;
 
 
 pub struct Structure {
     objects: Objects,
     edges:   Edges
+}
+
+impl From<Object> for Structure {
+    fn from(item: Object) -> Self {
+        Structure {
+            objects: Objects::from(item),
+            edges: Edges::empty()
+        }
+    }
+}
+
+impl From<i32> for Structure {
+    fn from(item: i32) -> Self {
+        Structure {
+            objects: Objects::from(Object::from(item)),
+            edges: Edges::from(Edge::from(item))
+        }
+    }
 }
 
 impl fmt::Display for Structure {
@@ -28,6 +46,13 @@ impl Structure {
         Structure {
             objects: Objects::from_vec(os.unwrap_or_default()),
 			edges:   Edges::from_vec(es.unwrap_or_default())
+        }
+    }
+
+    pub fn blank() -> Structure {
+        Structure {
+            objects: Objects::blank(),
+            edges:   Edges::blank()
         }
     }
 

@@ -9,6 +9,7 @@ use std::{thread, time};
 //use crate::object::*;
 
 
+/*
 pub fn initialize_db() -> Result<Database, Error> {
     /*
      * "host=localhost port=5432 dbname=agillee user=postgres"
@@ -30,17 +31,19 @@ pub fn initialize_db() -> Result<Database, Error> {
         }
     }
 }
+*/
 
 
 pub struct Database {
     //schema: Object,
-    pub client: Client
+    //pub client: Client
 }
 
 impl Database {
     /*
      * Add tables to database.
      */
+     /*
     fn add_tables(&mut self) -> Result<(), Error> {
     	for scheme in Table::all_schemes() {
         	let transaction = self.client.transaction()?;
@@ -72,14 +75,14 @@ impl Database {
         
         Ok(())
     }
+    */
 
-	pub fn create_edge(&mut self, e: Edge) -> Result<Option<Edge>, Error> {
-    	let mut transaction = self.client.transaction()?;
 
-    	let edge = Database::insert_edge(e, transaction.transaction()?)?;
+	pub fn create_edge(mut t: Transaction, e: Edge) -> Result<Option<Edge>, Error> {
+    	let edge = Database::insert_edge(e, t.transaction()?)?;
     	if edge.is_some() {
         	println!("edge addition was success");
-            transaction.commit()?;
+            t.commit()?;
             Ok(edge)
     	} else {
         	println!("edge addition was failure");
@@ -88,16 +91,14 @@ impl Database {
 
 	}
 
-    pub fn create_object(&mut self, object: Object) -> Result<Option<(Object, Edge)>, Error> {
-        let mut tra = self.client.transaction()?;
-
-		let obj  = Database::insert_object(object, tra.transaction()?)?;
-        let obj  = Database::upsert_form(obj, tra.transaction()?)?;
-        let edge = Database::insert_root(&obj, tra.transaction()?)?;
+    pub fn create_object(mut t: Transaction, object: Object) -> Result<Option<(Object, Edge)>, Error> {
+		let obj  = Database::insert_object(object, t.transaction()?)?;
+        let obj  = Database::upsert_form(obj, t.transaction()?)?;
+        let edge = Database::insert_root(&obj, t.transaction()?)?;
 
 		if let (Some(o), Some(e)) = (obj, edge) {
     		println!("object addition was succesful");
-    		tra.commit()?;
+    		t.commit()?;
     		Ok(Some((o, e)))
 		} else {
     		println!("object addition failed");
@@ -179,7 +180,7 @@ impl Database {
     }
 
 
-	pub fn query_with_object(&mut self, object: &Object) -> Result<Vec<Object>, Error> {
+	pub fn query_with_object(mut t: Transaction, object: &Object) -> Result<Vec<Object>, Error> {
     	let query: &'static str  = "
         	SELECT O.id, O.description, F.form, COALESCE(NULLIF(E.a, O.id), E.b) as root
             FROM Objects O LEFT JOIN Edges E ON O.id = E.a OR O.id = E.b
@@ -193,23 +194,23 @@ impl Database {
         			, TRUE)
             	";
 
-		Ok(
-    		self.client.query(query, &[ &object.get_id(),
-                                		&object.get_description(),
-                                		&object.get_form_id(),
-                                		&object.get_root()])?
-                        .iter()
-                        .map(|row|
-                    		Object::new(
-                        		row.try_get("id").ok().as_ref(),
-                            	row.try_get("description").ok(),
-                                Form::from_id(row.try_get("form").ok()),
-                                row.try_get("root").ok()))
-                        .collect()
-		)
+		let res = t.query(query, &[ &object.get_id(),
+                            		&object.get_description(),
+                            		&object.get_form_id(),
+                            		&object.get_root()])?
+                    .iter()
+                    .map(|row|
+                		Object::new(
+                    		row.try_get("id").ok().as_ref(),
+                        	row.try_get("description").ok(),
+                            Form::from_id(row.try_get("form").ok()),
+                            row.try_get("root").ok()))
+                    .collect();
+        t.commit()?;
+        Ok(res)
 	}
 
-	pub fn query_with_edge(&mut self, edge: &Edge) -> Result<Vec<Edge>, Error> {
+	pub fn query_with_edge(mut t: Transaction, edge: &Edge) -> Result<Vec<Edge>, Error> {
     	let query: &'static str  = "
         	SELECT a, b, a2b, b2a
             FROM Edges 
@@ -219,21 +220,19 @@ impl Database {
 				AND COALESCE($4 = b2a, TRUE)
             	";
 
-		Ok(
-    		self.client.query(query, &[ &edge.get_a(),
-                                		&edge.get_b(),
-                                		&edge.get_a2b(),
-                                		&edge.get_b2a()])?
-                        .iter()
-                        .map(|row|
-                    		Edge::new(
-                        		row.try_get("a").ok(),
-                            	row.try_get("b").ok(),
-                                row.try_get("a2b").ok(),
-                                row.try_get("b2a").ok()))
-                        .collect()
-		)
+		let res = t.query(query, &[ &edge.get_a(),
+                            		&edge.get_b(),
+                            		&edge.get_a2b(),
+                            		&edge.get_b2a()])?
+                    .iter()
+                    .map(|row|
+                		Edge::new(
+                    		row.try_get("a").ok(),
+                        	row.try_get("b").ok(),
+                            row.try_get("a2b").ok(),
+                            row.try_get("b2a").ok()))
+                    .collect();
+        t.commit()?;
+        Ok(res)
 	}
-	
-
 }

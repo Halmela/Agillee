@@ -1,5 +1,6 @@
 use std::fmt;
 use std::hash::{Hash, Hasher};
+use std::convert::From;
 
 #[derive(Clone, Eq, PartialEq, PartialOrd, Ord, Default)]
 pub struct Object {
@@ -27,6 +28,15 @@ impl Object {
         }
     }
 
+	pub fn blank() -> Object {
+    	Object {
+			id:   None,
+			description:   None,
+			form: None,
+			root: None
+    	}
+	}
+
     pub fn get_id(&self) -> Option<i32> {
         self.id
     }
@@ -45,6 +55,17 @@ impl Object {
 
     pub fn get_root(&self) -> Option<i32> {
         self.root.clone()
+    }
+}
+
+impl From<i32> for Object {
+    fn from(item: i32) -> Self {
+        Object {
+            id: Some(item),
+            description: None,
+            form: None,
+            root: None
+        }
     }
 }
 

@@ -4,22 +4,26 @@ use crate::objects::*;
 use crate::edge::*;
 use crate::edges::*;
 use crate::structure::*;
-use postgres::Error;
+use postgres::{Transaction, Error};
 
 
 pub struct Commander {
-    db: Database,
 }
 
 impl Commander {
+    /*
     pub fn new(db: Database) -> Commander {
         Commander { db }
     }
+    */
 
-    pub fn execute(&mut self, c: Command) -> Result<Structure, Error> {
+
+
+    pub fn execute(t: Transaction, c: Command) -> Result<Structure, Error> {
         match c {
             Command::Read(s) =>
-                self.read(s),
+                Commander::read(t, s),
+                /*
             Command::ReadObject(o) =>
                 self.db.query_with_object(&o)
                     .map(|v| Structure::new(Some(v), None)),
@@ -31,16 +35,17 @@ impl Commander {
                         	Some(vec!(o)),
                         	Some(vec!(e))
                     	))),
+                    	*/
             _ => Ok(Structure::new(None, None))
         }
     }
 
-    fn read(&mut self, s: Structure) -> Result<Structure, Error> {
+    fn read(mut t: Transaction, s: Structure) -> Result<Structure, Error> {
         let mut os = vec!();
         for o in s.get_objects() {
 			os.push(
     			Objects::from_vec(
-        			self.db.query_with_object(&o)?
+        			Database::query_with_object(t.transaction()?, &o)?
     			));
         }
 
@@ -49,11 +54,9 @@ impl Commander {
         for e in s.get_edges() {
             es.push(
                 Edges::from_vec(
-                    self.db.query_with_edge(&e)?
+                    Database::query_with_edge(t.transaction()?, &e)?
                 ));
         }
-        println!("{}, {}", os.len(), es.len());
-
         
         let es = es.iter()
             .fold(
@@ -67,10 +70,13 @@ impl Commander {
                 |acc, o| acc.merge(o)
             );
 
+        t.commit()?;
+
         Ok(
             Structure::from_structs(os, es)
         )
     }
+    
 }
 
 

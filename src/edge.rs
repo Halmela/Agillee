@@ -1,6 +1,7 @@
 use std::fmt;
 use crate::object::*;
 use std::hash::{Hash, Hasher};
+use std::convert::From;
 
 #[derive(Clone, Eq, PartialEq, PartialOrd, Ord, Default)]
 pub struct Edge {
@@ -31,6 +32,14 @@ impl Edge {
     	}
 	}
 
+	pub fn blank() -> Edge {
+    	Edge {
+			a:   None,
+			b:   None,
+			a2b: None,
+			b2a: None }
+	}
+
 	pub fn root(object: &Option<Object>) -> Option<Edge> {
     	if let Some((Some(r), Some(o))) = object.as_ref().map(|o| (o.root, o.id)) {
         	Some(Edge::new(
@@ -56,6 +65,12 @@ impl Edge {
 	pub fn get_b2a(&self) -> Option<i32> {
     	self.b2a
 	}
+}
+
+impl From<i32> for Edge {
+    fn from(item: i32) -> Self {
+        Edge { a: Some(item), b: None, a2b: None, b2a: None }
+    }
 }
 
 
