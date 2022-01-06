@@ -12,6 +12,7 @@ postgres = "0.19"
 itertools = "0.10"
 rocket = "0.5.0-rc.1"
 tokio = "1.15"
+maud = { version = "0.23", features = ["rocket"] }
 
 [dependencies.rocket_sync_db_pools]
 version = "0.1.0-rc.1"

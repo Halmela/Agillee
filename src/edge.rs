@@ -2,6 +2,7 @@ use std::fmt;
 use crate::object::*;
 use std::hash::{Hash, Hasher};
 use std::convert::From;
+use std::default::Default;
 
 #[derive(Clone, Eq, PartialEq, PartialOrd, Ord, Default)]
 pub struct Edge {

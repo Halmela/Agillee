@@ -36,8 +36,16 @@ impl Commander {
                         	Some(vec!(e))
                     	))),
                     	*/
+            Command::Init => Commander::init(t),
             _ => Ok(Structure::new(None, None))
         }
+    }
+
+    fn init(t: Transaction) -> Result<Structure, Error>  {
+        //Database::drop_tables(t)?;
+        Database::add_tables(t)?;
+
+		Ok(Structure::empty())
     }
 
     fn read(mut t: Transaction, s: Structure) -> Result<Structure, Error> {
@@ -85,5 +93,6 @@ pub enum Command {
     //Update,
     //Delete,
     ReadObject(Object),
-    Read(Structure)
+    Read(Structure),
+    Init
 }

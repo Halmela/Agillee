@@ -6,6 +6,7 @@ use itertools::Itertools;
 use std::convert::From;
 
 
+#[derive(Default)]
 pub struct Edges {
     edges: HashSet<Edge>
 }
@@ -28,7 +29,7 @@ impl Edges {
 
     pub fn blank() -> Edges {
         Edges {
-            edges: [Edge::blank()].iter().cloned().collect()
+            edges: [Default::default()].iter().cloned().collect()
         }
     }
 

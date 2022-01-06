@@ -7,6 +7,7 @@ use itertools::Itertools;
 use std::convert::From;
 
 
+#[derive(Default)]
 pub struct Objects {
     objects: HashSet<Object>
 }
@@ -18,7 +19,7 @@ impl Objects {
 
     pub fn blank() -> Objects {
 		Objects {
-    		objects: [Object::blank()].iter().cloned().collect()
+    		objects: [Default::default()].iter().cloned().collect()
 		}
     }
 
@@ -48,6 +49,7 @@ impl From<Object> for Objects {
         Objects { objects: [item].iter().cloned().collect() }
     }
 }
+
 
 impl fmt::Display for Objects {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

@@ -43,12 +43,12 @@ impl Database {
     /*
      * Add tables to database.
      */
-     /*
-    fn add_tables(&mut self) -> Result<(), Error> {
+     
+    pub fn add_tables(mut t: Transaction) -> Result<(), Error> {
     	for scheme in Table::all_schemes() {
-        	let transaction = self.client.transaction()?;
-        	Database::add_scheme(scheme, transaction)?;
+        	Database::add_scheme(scheme, t.transaction()?)?;
     	}
+    	t.commit()?;
     	Ok(())
     }
 
@@ -57,12 +57,11 @@ impl Database {
      */
     fn add_scheme(scheme: &str, mut transaction: Transaction) -> Result<(), Error> {
         let res = transaction.batch_execute(scheme);
-    	transaction.commit()?;
-
+    	
         match res {
-            Ok(_) 		=> Ok(()),
+            Ok(_) 		=> { transaction.commit()?; Ok(())},
             Err(e) => match e.code().unwrap().code() {
-                "42P07" => {Ok(())}, // Error code for creating a duplicate table
+                "42P07" => {  Ok(())}, // Error code for creating a duplicate table
                 _	    => Err(e)}
         }
     }
@@ -70,13 +69,13 @@ impl Database {
 	/*
      * Drop tables from database
      */
-    pub fn drop_tables(&mut self) -> Result<(), Error> {
-        self.client.execute("DROP TABLE objects, relations, edges, forms, formations", &[])?;
+    pub fn drop_tables(mut t: Transaction) -> Result<(), Error> {
+        t.execute("DROP TABLE objects, relations, edges, forms, formations", &[])?;
+        t.commit()?;
         
         Ok(())
     }
-    */
-
+    
 
 	pub fn create_edge(mut t: Transaction, e: Edge) -> Result<Option<Edge>, Error> {
     	let edge = Database::insert_edge(e, t.transaction()?)?;

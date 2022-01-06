@@ -4,10 +4,9 @@ use crate::edge::*;
 use crate::edges::*;
 use std::fmt;
 use std::fmt::Write;
-use itertools::Itertools;
 use std::convert::From;
 
-
+#[derive(Default)]
 pub struct Structure {
     objects: Objects,
     edges:   Edges
@@ -85,4 +84,3 @@ impl Structure {
         self.edges.get_edges()
     }
 }
-
