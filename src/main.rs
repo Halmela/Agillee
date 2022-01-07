@@ -1,18 +1,45 @@
-use ::postgres::{NoTls, Error,Transaction};
+#[macro_use]
+extern crate horrorshow;
+use horrorshow::prelude::*;
+use horrorshow::helper::doctype;
+
 use agillee::objects::*;
 use agillee::structure::*;
 use agillee::object::*;
-use agillee::database::*;
 //use agillee::cli::*;
 use agillee::commander::*;
+
 use rocket_sync_db_pools::{ postgres, database };
 use rocket::{ Rocket, Build };
 use rocket::fairing::AdHoc;
+use rocket::response::content;
 
 #[macro_use] extern crate rocket;
 
 #[get("/")]
-async fn index(client: Db) -> String {
+async fn index(client: Db) -> content::Html<String> {
+    let res = format!("{}", html! {
+        : doctype::HTML;
+        html {
+            head {
+                title : "Agilleen kantapää";
+            }
+            body {
+                h1(id="heading") {
+                    : "otsikko"
+                }
+                p {
+                    : "Leipä"
+                }
+            }
+        }
+    });
+    
+    content::Html(res)
+
+}
+
+/*
     let res = client.run(
         move |c| {
             Commander::execute(
@@ -23,8 +50,7 @@ async fn index(client: Db) -> String {
     ).await;
 
     res.unwrap().to_string()
-}
-
+        */
 #[get("/o/<id>")]
 async fn object(client: Db, id: i32) -> String {
     let res = client.run(
