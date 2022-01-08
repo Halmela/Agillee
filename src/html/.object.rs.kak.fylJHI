@@ -1,0 +1,6 @@
+#[macro_use]
+extern crate horrorshow;
+use horrorshow::prelude::*;
+use crate::object::*;
+
+

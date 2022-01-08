@@ -40,7 +40,7 @@ impl Objects {
     }
 
     pub fn get_objects(&self) -> Vec<Object> {
-        self.objects.iter().map(|o| o.clone()).collect()
+        self.objects.iter().sorted().map(|o| o.clone()).collect()
     }
 }
 

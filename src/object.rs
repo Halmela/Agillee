@@ -92,6 +92,18 @@ impl fmt::Display for Object {
 }
 
 
+impl fmt::Display for Form {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		let form = match &self {
+    		Form::Tangible => "tangible",
+    		Form::Intangible => "intangible",
+    		Form::Void => "void",
+		};
+
+		write!(f, "{}", form)
+    }
+}
+
 #[derive(Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub enum Form {
     Tangible,

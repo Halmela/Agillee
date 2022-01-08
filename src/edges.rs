@@ -41,7 +41,7 @@ impl Edges {
     }
 
     pub fn get_edges(&self) -> Vec<Edge> {
-        self.edges.iter().map(|o| o.clone()).collect()
+        self.edges.iter().sorted().map(|o| o.clone()).collect()
     }
 }
 
