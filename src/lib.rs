@@ -10,3 +10,8 @@ pub mod edge;
 pub mod commander;
 pub mod structure;
 pub mod edges;
+
+pub mod web {
+    pub mod routes;
+    pub mod templates;
+}

@@ -52,6 +52,7 @@ impl From<Edge> for Edges {
 
 }
 
+/*
 impl fmt::Display for Edges {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     	let mut res = String::new();
@@ -67,5 +68,4 @@ impl fmt::Display for Edges {
         write!(f, "{}", res)
 	}
 }
-
-
+*/

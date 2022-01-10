@@ -41,14 +41,14 @@ impl Commander {
         }
     }
 
-    fn init(t: Transaction) -> Result<Structure, Error>  {
+    pub fn init(t: Transaction) -> Result<Structure, Error>  {
         //Database::drop_tables(t)?;
         Database::add_tables(t)?;
 
 		Ok(Structure::empty())
     }
 
-    fn read(mut t: Transaction, s: Structure) -> Result<Structure, Error> {
+    pub fn read(mut t: Transaction, s: Structure) -> Result<Structure, Error> {
         let mut os = vec!();
         for o in s.get_objects() {
 			os.push(

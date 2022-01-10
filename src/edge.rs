@@ -75,9 +75,11 @@ impl From<i32> for Edge {
 }
 
 
+/*
 impl fmt::Display for Edge {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     	write!(f, "{:?} {:?} {:?} {:?}", self.a, self.b, self.a2b, self.b2a)
 	}
 }
+*/
 

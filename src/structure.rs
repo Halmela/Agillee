@@ -8,8 +8,8 @@ use std::convert::From;
 
 #[derive(Default)]
 pub struct Structure {
-    objects: Objects,
-    edges:   Edges
+    pub objects: Objects,
+    pub edges:   Edges
 }
 
 impl From<Object> for Structure {
@@ -30,6 +30,7 @@ impl From<i32> for Structure {
     }
 }
 
+/*
 impl fmt::Display for Structure {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     	let mut res = String::new();
@@ -39,6 +40,7 @@ impl fmt::Display for Structure {
     	write!(f, "{}", res)
 	}
 }
+*/
 
 impl Structure {
     pub fn new(os: Option<Vec<Object>>, es: Option<Vec<Edge>>) -> Structure {

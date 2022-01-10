@@ -69,6 +69,7 @@ impl From<i32> for Object {
     }
 }
 
+/*
 impl fmt::Display for Object {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     	let id = self.id.unwrap_or_default();
@@ -90,6 +91,7 @@ impl fmt::Display for Object {
     	write!(f, "id: {}\tdescription: {}\t{}\t{}", id, desc, form, root)
 	}
 }
+*/
 
 
 impl fmt::Display for Form {

@@ -51,6 +51,7 @@ impl From<Object> for Objects {
 }
 
 
+/*
 impl fmt::Display for Objects {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     	let mut res = String::new();
@@ -66,4 +67,5 @@ impl fmt::Display for Objects {
         write!(f, "{}", res)
 	}
 }
+*/
 
