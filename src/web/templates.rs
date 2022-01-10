@@ -10,6 +10,7 @@ use crate::models::objects::*;
 use crate::models::edge::*;
 use crate::models::edges::*;
 
+use std::fmt::Display;
 
 pub fn page(s: Option<Structure>) -> String {
     let title: &'static str = "Agilleen tietokanta";
@@ -30,14 +31,16 @@ fn header(page_title: &str) -> Markup {
     }
 }
 
+fn parse<T: Display>(t: Option<T>) -> String {
+    t.map(|x| x.to_string()).unwrap_or_else(|| String::from("-"))
+}
+
 
 impl Render for Object {
     fn render(&self) -> Markup {
         //let f = |x| x.map(|y| y.to_string()).unwrap_or_else(|| "");
-        let (id, desc, form, root) =( self.get_id().map(|y| y.to_string()).unwrap_or_else(|| String::from("-")),
-                                      self.get_description().unwrap_or_else(|| String::from("-")),
-                                      self.get_form().map(|f| f.to_string()).unwrap_or_else(|| String::from("-")),
-                                      self.get_root().map(|y| y.to_string()).unwrap_or_else(|| String::from("-")));
+        let (id, desc, form, root) =( parse(self.get_id()),   parse(self.get_description()),
+                                      parse(self.get_form()), parse(self.get_root()));
         html! {
             table {
                 tr {
@@ -59,10 +62,8 @@ impl Render for Object {
 
 impl Render for Edge {
     fn render(&self) -> Markup {
-        let (a,b,a2b,b2a) =(  self.get_a().map(|y| y.to_string()).unwrap_or_else(|| String::from("-")),
-                              self.get_b().map(|y| y.to_string()).unwrap_or_else(|| String::from("-")),
-                            self.get_a2b().map(|y| y.to_string()).unwrap_or_else(|| String::from("-")),
-                            self.get_b2a().map(|y| y.to_string()).unwrap_or_else(|| String::from("-")));
+        let (a,b,a2b,b2a) =(parse(self.get_a()),   parse(self.get_b()),
+                            parse(self.get_a2b()), parse(self.get_b2a()));
     	html! {
             table {
                 tr {
