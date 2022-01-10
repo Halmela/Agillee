@@ -1,10 +1,8 @@
-use postgres::{Client, NoTls, Error, Transaction};
+use postgres::{Error, Transaction};
 //use agillee::table::*;
-use crate::table::*;
-use crate::object::*;
-use crate::objects::*;
-use crate::edge::*;
-use std::{thread, time};
+use crate::data::table::*;
+use crate::models::object::*;
+use crate::models::edge::*;
 
 //use crate::object::*;
 

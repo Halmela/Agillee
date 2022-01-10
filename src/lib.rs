@@ -1,15 +1,19 @@
 #[doc(inline)]
 pub use std;
 
-pub mod object;
-pub mod objects;
-pub mod table;
-pub mod database;
 //pub mod cli;
-pub mod edge;
 pub mod commander;
-pub mod structure;
-pub mod edges;
+pub mod data {
+    pub mod table;
+    pub mod database;
+}
+pub mod models {
+    pub mod structure;
+    pub mod object;
+    pub mod objects;
+    pub mod edge;
+    pub mod edges;
+}
 
 pub mod web {
     pub mod routes;

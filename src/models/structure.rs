@@ -1,9 +1,7 @@
-use crate::object::*;
-use crate::objects::*;
-use crate::edge::*;
-use crate::edges::*;
-use std::fmt;
-use std::fmt::Write;
+use crate::models::object::*;
+use crate::models::objects::*;
+use crate::models::edge::*;
+use crate::models::edges::*;
 use std::convert::From;
 
 #[derive(Default)]

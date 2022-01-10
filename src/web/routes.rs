@@ -1,8 +1,8 @@
 #[macro_use]
-use crate::objects::*;
-use crate::structure::*;
-use crate::object::*;
-use crate::edge::*;
+use crate::models::objects::*;
+use crate::models::structure::*;
+use crate::models::object::*;
+use crate::models::edge::*;
 use crate::commander::*;
 use crate::web::templates::page;
 

@@ -1,8 +1,5 @@
-use crate::object::*;
-use crate::edge::*;
+use crate::models::object::*;
 use std::collections::{HashSet};
-use std::fmt;
-use std::fmt::Write;
 use itertools::Itertools;
 use std::convert::From;
 

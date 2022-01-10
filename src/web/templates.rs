@@ -4,11 +4,11 @@
 
 use maud::{ html, DOCTYPE, Markup, Render };
 
-use crate::structure::*;
-use crate::object::*;
-use crate::objects::*;
-use crate::edge::*;
-use crate::edges::*;
+use crate::models::structure::*;
+use crate::models::object::*;
+use crate::models::objects::*;
+use crate::models::edge::*;
+use crate::models::edges::*;
 
 
 pub fn page(s: Option<Structure>) -> String {

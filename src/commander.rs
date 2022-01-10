@@ -1,9 +1,8 @@
-use crate::database::*;
-use crate::object::*;
-use crate::objects::*;
-use crate::edge::*;
-use crate::edges::*;
-use crate::structure::*;
+use crate::data::database::*;
+use crate::models::object::*;
+use crate::models::objects::*;
+use crate::models::edges::*;
+use crate::models::structure::*;
 use postgres::{Transaction, Error};
 
 
