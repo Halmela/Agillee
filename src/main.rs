@@ -1,5 +1,3 @@
-extern crate horrorshow;
-
 use agillee::web::routes::{stage_db};
 
 #[macro_use] extern crate rocket;

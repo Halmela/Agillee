@@ -1,7 +1,3 @@
-//#[macro_use]
-//use horrorshow::helper::doctype;
-//use horrorshow::{ box_html, html, RenderBox };
-
 use maud::{ html, DOCTYPE, Markup, Render };
 
 use crate::models::structure::*;
@@ -12,15 +8,40 @@ use crate::models::edges::*;
 
 use std::fmt::Display;
 
-pub fn page(s: Option<Structure>) -> String {
+pub fn index<T: Into<Structure>>(s: T) -> String {
+    let s: Structure = s.into();
+    page(html! {
+        p { "etu sivu" }
+        @if s.is_empty() {
+            p { "tyhjä tieto kanta" }
+        } @else {
+            (s)
+        }
+    })
+}
+
+pub fn response<T: Into<Structure>>(s: T) -> String {
+    let s: Structure = s.into();
+    page(html! {
+        .top-left-quarter-circle {}
+        @if s.is_empty() {
+            p { "ope raatio epä onnistui" }
+        } @else {
+            (s)
+        }
+    })
+}
+       
+pub fn page(content: impl Render) -> String {
     let title: &'static str = "Agilleen tietokanta";
     html! {
+        link rel="stylesheet" type="text/css" href="/style.css";
         (header(title))
-        h1 { (title) }
-        p {(s.unwrap())}
+        a href="/" {
+        	h1 { (title) }
+        }
+        (content)
     }.into_string()
-
-
 }
 
 fn header(page_title: &str) -> Markup {
@@ -31,6 +52,36 @@ fn header(page_title: &str) -> Markup {
     }
 }
 
+pub fn object_form() -> String {
+    page(html! { .object_form {
+        form action="/o/new" method="post" {
+            .input type="hidden" name="_method" value="put";
+            .object_grid {
+                    .grid-item { label for="description" { "Description: " } }
+                    .grid-item { input type="text" name="description"; }
+
+                    .grid-item { label for="root" { "Root: " } }
+                    .grid-item { input type="number" name="root"; }
+
+                label for="formation" { "Form: " }
+                .grid-container {
+                    .grid-item { label for="tangible" { "Tangible" } }
+                    .grid-item { input type="radio" id="tangible" name="form" value="tangible"; }
+
+                    .grid-item { label for="intangible" { "Intangible" } }
+                    .grid-item { input type="radio" id="intangible" name="form" value="intangible"; }
+
+                    .grid-item { label for="void" { "Void" } }
+                    .grid-item { input type="radio" id="void" name="form" value="void"; }
+                }
+
+
+                .submit-box  {input type="submit" value="Submit";}
+            }
+        }
+    } })
+}
+
 fn parse<T: Display>(t: Option<T>) -> String {
     t.map(|x| x.to_string()).unwrap_or_else(|| String::from("-"))
 }
@@ -38,25 +89,14 @@ fn parse<T: Display>(t: Option<T>) -> String {
 
 impl Render for Object {
     fn render(&self) -> Markup {
-        //let f = |x| x.map(|y| y.to_string()).unwrap_or_else(|| "");
-        let (id, desc, form, root) =( parse(self.get_id()),   parse(self.get_description()),
-                                      parse(self.get_form()), parse(self.get_root()));
-        html! {
-            table {
-                tr {
-                    th { "id" }
-                    th { "description" }
-                    th { "form" }
-                    th { "root" }
-                }
-                tr {
-                    td { ( id ) }
-                    td { (desc) }
-                    td { (form) }
-                    td { (root) }
-                }
-            }
-        }
+        let (id, desc, form, root) =(parse(self.get_id()),   parse(self.get_description()),
+                                     parse(self.get_form()), parse(self.get_root()));
+        html! { .object {
+                    p { ( id ) }
+                    p { (desc) }
+                    p { (form) }
+                    p { (root) }
+        }}
     }
 }
 
@@ -64,32 +104,33 @@ impl Render for Edge {
     fn render(&self) -> Markup {
         let (a,b,a2b,b2a) =(parse(self.get_a()),   parse(self.get_b()),
                             parse(self.get_a2b()), parse(self.get_b2a()));
-    	html! {
-            table {
-                tr {
+    	html! { .edge {
+        	/*
                     th { "a" }
                     th { "b" }
                     th { "a2b" }
                     th { "b2a" }
-                }
-                tr {
-                    td { (a) }
-                    td { (b) }
-                    td { (a2b) }
-                    td { (b2a) }
-                }
-            }
-        }
+                        */
+                    .edge-box { }
+                    p { (a2b) }
+                    .edge-box { }
+                    p { (a) }
+                    .edge-box { }
+                    p { (b) }
+                    .edge-box { }
+                    p { (b2a) }
+                    .edge-box { }
+        }}
     }
 }
 
 
 impl Render for Structure {
     fn render(&self) -> Markup {
-        html! {
+        html! { .structure {
             (self.objects)
             (self.edges)
-        }
+        }}
     }
 }
 
@@ -97,123 +138,36 @@ impl Render for Structure {
 
 impl Render for Objects {
     fn render(&self) -> Markup {
-        html! {
-            table {
-                @for o in self.get_objects() {
-                    tr {
-                        td { (o) }
+        if self.get_objects().len() == 1 {
+            self.get_objects()[0].render()
+        } else {
+            html! { .objects {
+                h3 { "Objects" }
+                .grid-container {
+                    .object {
+                        b { "id" }
+                        b { "description" }
+                        b { "form" }
+                        b { "root" }
+                    }
+                    @for o in self.get_objects() {
+                        (o)
                     }
                 }
-            }
+            }}
         }
     }
 }
 
 impl Render for Edges {
     fn render(&self) -> Markup {
-        html! {
+        html! { .edges {
+            h3 { "Edges" }
             table {
                 @for e in self.get_edges() {
-                    tr {
-                        td { (e) }
-                    }
+                    (e)
                 }
             }
-        }
+        }}
     }
 }
-
-/*
-fn render_structure(structure: &Structure) -> Box<dyn RenderBox + '_> {
-    let (objects, edges) = (structure.get_objects(), structure.get_edges());
-    box_html! {
-        objects {
-            header(class="structure-header") {
-                h2 : "Structure";
-                : render_objects(&objects);
-                : render_edges(&edges);
-            }
-        }
-    }
-}
-
-
-fn render_objects(objects: &Vec<Object>) -> Box<dyn RenderBox + '_> {
-    box_html! {
-        objects {
-            header(class="objects-header") {
-                h3 : "Objects";
-                table {
-                    tr {
-                        th : "id";
-                        th : "description";
-                        th : "form";
-                        th : "root";
-                    }
-                    @ for o in objects {
-                        : render_object(&o)
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-
-
-fn render_object(object: &Object) -> Box<dyn RenderBox + '_> {
-    //let Object { id, description, form, root } = object;
-    box_html! {
-        object {
-            header(class="object-header") {
-                    tr { 
-                        td : object.get_id();
-                        td : object.get_description();
-                        td : object.get_form().map(|f| f.to_string());
-                        td : object.get_root();
-                    }
-                
-            }
-        }
-    }
-}
-
-
-fn render_edges(edges: &Vec<Edge>) -> Box<dyn RenderBox + '_> {
-    box_html! {
-        objects {
-            header(class="edges-header") {
-                h3 : "Edges";
-                table {
-                    tr {
-                        th : "a";
-                        th : "b";
-                        th : "a2b";
-                        th : "b2a";
-                    }
-                    @ for e in edges {
-                        : render_edge(&e)
-                    }
-                }
-            }
-        }
-    }
-}
-
-fn render_edge(edge: &Edge) -> Box<dyn RenderBox + '_> {
-    box_html! {
-        edge {
-            header(class="edge-header") {
-                tr {
-                    td : edge.get_a();
-                    td : edge.get_b();
-                    td : edge.get_a2b();
-                    td : edge.get_b2a();
-                }
-            }
-        }
-    }
-}
-
-*/

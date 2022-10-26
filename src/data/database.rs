@@ -3,38 +3,10 @@ use postgres::{Error, Transaction};
 use crate::data::table::*;
 use crate::models::object::*;
 use crate::models::edge::*;
-
-//use crate::object::*;
-
-
-/*
-pub fn initialize_db() -> Result<Database, Error> {
-    /*
-     * "host=localhost port=5432 dbname=agillee user=postgres"
-     * "postgresql://postgres:psql@postgres:5432/agillee"
-     */
-
-	match Client::connect(
-                "host=localhost port=5432 dbname=agillee user=postgres",
-                NoTls) {
-        Ok(c) => {
-            let mut db = Database {
-                client: c };
-            db.add_tables()?;
-            Ok(db)},
-        Err(_) => {
-            println!("can't connect; small wait is in order");
-            thread::sleep(time::Duration::from_secs(5));
-            initialize_db()
-        }
-    }
-}
-*/
+use crate::models::form::*;
 
 
 pub struct Database {
-    //schema: Object,
-    //pub client: Client
 }
 
 impl Database {

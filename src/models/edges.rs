@@ -43,11 +43,21 @@ impl Edges {
     }
 }
 
+impl From<Vec<Edge>> for Edges {
+	fn from(item: Vec<Edge>) -> Self {
+        let mut hs = HashSet::new();
+        for e in item {
+            hs.insert(e);
+        }
+
+        Edges { edges: hs }
+	}
+}
+
 impl From<Edge> for Edges {
     fn from(item: Edge) -> Self {
         Edges { edges: [item].iter().cloned().collect() }
     }
-
 }
 
 /*

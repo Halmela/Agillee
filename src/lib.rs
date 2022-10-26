@@ -13,6 +13,7 @@ pub mod models {
     pub mod objects;
     pub mod edge;
     pub mod edges;
+    pub mod form;
 }
 
 pub mod web {

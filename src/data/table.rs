@@ -1,13 +1,17 @@
+use std::fmt;
+
+
 /*
  * Every table/struct should also be enum
  */
-
+#[derive(Clone, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub enum Table {
     Objects,
+    Descriptions,
     Relations,
     Edges,
     Forms,
-    Formations
+    Formations,
 }
 
 impl Table {
@@ -76,8 +80,54 @@ impl Table {
                 INSERT INTO Formations (object, form)
                 VALUES (1,1), (2,2), (3,3), (4,4)
                 ;",
-    		//_ 	   => "CREATE TABLE empty();"
+    		_ 	   => "CREATE TABLE empty();"
     	}
     }
+
+/*
+    pub fn to_select(&self) -> &'static str {
+        match self {
+            Table::Objects => {""},
+            Table::Formations => {""},
+            Table::Descriptions => {""},
+            _ => {""}
+        };
+        "SELECT"
+    }
+
+    pub fn to_from(&self) -> &'static str {
+        match self {
+            Table::Objects => {"Objects O"},
+            Table::Formations => {""},
+            Table::Descriptions => {""},
+            _ => {""}
+        };
+        "FROM"
+    }
+
+    pub fn to_where(&self, i: i32) -> &'static str {
+        match self {
+            Table::Objects => {format!(" AND ${} ",i)},
+            Table::Formations => {format!(" AND ${} ",i)},
+            Table::Descriptions => {format!(" AND D.description LIKE ${} ",i)},
+            _ => {format!("${}",i)}
+        }
+    }
+    */
+
 }
 
+impl fmt::Display for Table {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let t = match self {
+            Table::Objects => "Objects",
+            Table::Descriptions => "Descriptions",
+            Table::Edges => "Edges",
+            Table::Forms => "Forms",
+            Table::Formations => "Formations",
+            _ => ""
+        };
+
+        write!(f, "{}", t)
+    }
+}

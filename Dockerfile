@@ -1,4 +1,4 @@
-FROM rust:1.49 as build
+FROM rust:1.64 as build
 
 # create a new empty shell project
 RUN USER=root cargo new --bin agillee
@@ -20,7 +20,7 @@ RUN rm ./target/release/deps/agillee*
 RUN cargo build --release
 
 # our final base
-FROM rust:1.49-slim-buster
+FROM rust:1.64-slim-buster
 
 # copy the build artifact from the build stage
 COPY --from=build /agillee/target/release/agillee .

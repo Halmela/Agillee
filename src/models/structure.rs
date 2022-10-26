@@ -10,11 +10,37 @@ pub struct Structure {
     pub edges:   Edges
 }
 
+
 impl From<Object> for Structure {
     fn from(item: Object) -> Self {
         Structure {
             objects: Objects::from(item),
             edges: Edges::empty()
+        }
+    }
+}
+impl From<Objects> for Structure {
+    fn from(item: Objects) -> Self {
+        Structure {
+            objects: item,
+            edges: Edges::empty()
+        }
+    }
+}
+
+impl From<Edge> for Structure {
+    fn from(item: Edge) -> Self {
+        Structure {
+            objects: Objects::empty(),
+            edges: Edges::from(item)
+        }
+    }
+}
+impl From<Edges> for Structure {
+    fn from(item: Edges) -> Self {
+        Structure {
+            objects: Objects::empty(),
+            edges: item
         }
     }
 }
@@ -82,5 +108,9 @@ impl Structure {
 
     pub fn get_edges(&self) -> Vec<Edge> {
         self.edges.get_edges()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.objects.get_objects().is_empty() && self.edges.get_edges().is_empty()
     }
 }

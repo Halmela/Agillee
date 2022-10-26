@@ -1,8 +1,37 @@
-use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::convert::From;
+use std::collections::HashMap;
+use crate::data::table::Table;
+use crate::models::form::*;
+use rocket::form::{FromForm};
 
-#[derive(Clone, Eq, PartialEq, PartialOrd, Ord, Default)]
+pub struct Mabject<T> {
+    pub id: Option<i32>,
+    pub attributes: HashMap<Table, Option<Box<T>>>
+}
+
+impl<T> Mabject<T> {
+    pub fn new(id: Option<i32>, attributes: HashMap<Table, Option<Box<T>>>) -> Mabject<T> {
+        Mabject {
+            id,
+            attributes
+        }
+    }
+}
+
+
+impl<T> From<i32> for Mabject<T> {
+    fn from(item: i32) -> Self {
+        Mabject {
+            id: Some(item),
+            attributes: HashMap::new()
+        }
+    }
+}
+
+
+
+#[derive(Clone, Eq, PartialEq, PartialOrd, Ord, Default, FromForm, Debug)]
 pub struct Object {
     pub id: Option<i32>,
     pub description: Option<String>,
@@ -93,50 +122,3 @@ impl fmt::Display for Object {
 }
 */
 
-
-impl fmt::Display for Form {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		let form = match &self {
-    		Form::Tangible => "tangible",
-    		Form::Intangible => "intangible",
-    		Form::Void => "void",
-		};
-
-		write!(f, "{}", form)
-    }
-}
-
-#[derive(Clone, Eq, PartialEq, PartialOrd, Ord)]
-pub enum Form {
-    Tangible,
-    Intangible,
-    Void
-}
-
-impl Form {
-    pub fn to_id(&self) -> i32 {
-        match self {
-            Form::Tangible   => 2,
-            Form::Intangible => 3,
-            Form::Void       => 4,
-        }
-    }
-
-    pub fn from_id(id: Option<i32>) -> Option<Form> {
-        match id {
-            Some(2) => Some(Form::Tangible),
-            Some(3) => Some(Form::Intangible),
-            Some(4) => Some(Form::Void),
-            _ => None
-        }
-    }
-
-    pub fn from_str(s: Option<&str>) -> Option<Form> {
-        match s {
-            Some("Intangible") => Some(Form::Tangible),
-            Some("Rangible") => Some(Form::Intangible),
-            Some("Void") => Some(Form::Void),
-            _ => None
-        }
-    }
-}

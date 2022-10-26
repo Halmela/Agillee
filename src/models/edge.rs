@@ -1,9 +1,11 @@
 use crate::models::object::*;
+use crate::models::form::*;
 use std::hash::{Hash, Hasher};
 use std::convert::From;
 use std::default::Default;
+use rocket::form::FromForm;
 
-#[derive(Clone, Eq, PartialEq, PartialOrd, Ord, Default)]
+#[derive(Clone, Eq, PartialEq, PartialOrd, Ord, Default, FromForm)]
 pub struct Edge {
     pub a:   Option<i32>,
     pub b:   Option<i32>,

@@ -41,6 +41,17 @@ impl Objects {
     }
 }
 
+impl From<Vec<Object>> for Objects {
+    fn from(item: Vec<Object>) -> Self {
+        let mut hs = HashSet::new();
+        for o in item {
+            hs.insert(o);
+        }
+
+        Objects {objects: hs}
+    }
+}
+
 impl From<Object> for Objects {
     fn from(item: Object) -> Self {
         Objects { objects: [item].iter().cloned().collect() }

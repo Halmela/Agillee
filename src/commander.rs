@@ -5,6 +5,7 @@ use crate::models::edges::*;
 use crate::models::structure::*;
 use postgres::{Transaction, Error};
 
+enum E { F }
 
 pub struct Commander {
 }
@@ -16,12 +17,12 @@ impl Commander {
     }
     */
 
-
-
     pub fn execute(t: Transaction, c: Command) -> Result<Structure, Error> {
         match c {
             Command::Read(s) =>
                 Commander::read(t, s),
+            Command::Create(s) =>
+                Commander::create(t, s),
                 /*
             Command::ReadObject(o) =>
                 self.db.query_with_object(&o)
@@ -45,6 +46,32 @@ impl Commander {
         Database::add_tables(t)?;
 
 		Ok(Structure::empty())
+    }
+
+    pub fn create(mut t: Transaction, s: Structure) -> Result<Structure, Error> {
+        let mut os = vec!();
+        let mut es = vec!();
+
+        for object in s.get_objects() {
+			if let Some((o,e)) = Database::create_object(t.transaction()?, object)? {
+    			os.push(o);
+    			es.push(e);
+			} else {
+    			return Ok(Structure::empty());
+			}
+        }
+
+        for edge in s.get_edges() {
+            if let Some(e) = Database::create_edge(t.transaction()?, edge)? {
+                es.push(e);
+            } else {
+    			return Ok(Structure::empty());
+			}
+        }
+        
+
+        t.commit()?;
+        Ok(Structure::from_structs(Objects::from(os), Edges::from(es)))
     }
 
     pub fn read(mut t: Transaction, s: Structure) -> Result<Structure, Error> {
@@ -93,5 +120,6 @@ pub enum Command {
     //Delete,
     ReadObject(Object),
     Read(Structure),
+    Create(Structure),
     Init
 }
